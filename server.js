@@ -28,7 +28,11 @@ function archiveRawUrl(path) {
 }
 
 function recordJsonUrl(archiveId) {
-  return archiveRawUrl(`records/${encodeURIComponent(archiveId)}/data.json`);
+  return archiveRawUrl(`records/${archiveId}/data.json`);
+}
+
+function legacyRecordJsonUrl(archiveId) {
+  return archiveRawUrl(`records/${archiveId}.json`);
 }
 
 function imageUrlFromRecord(record) {
@@ -38,13 +42,8 @@ function imageUrlFromRecord(record) {
 function buildPageHtml(record, archiveId) {
   const title = record.title || "Untitled";
   const artworkCode = record.artworkCode || "";
-
-  // 数値（内部用）
   const rawEditionNumber = record.editionNumber || 1;
-
-  // 表示用（001）
-  const editionNumber = String(rawEditionNumber).padStart(3, "0");
-
+  const editionNumber = formatEdition(rawEditionNumber);
   const handle = record.handle || "";
   const productId = record.productId || "";
 
@@ -57,10 +56,7 @@ function buildPageHtml(record, archiveId) {
     : "";
 
   const imageUrl = imageUrlFromRecord(record);
-
-  // ★ ここが最重要（追加）
-  const displayArchiveId =
-    record.archiveId || `GLA-${artworkCode}-${editionNumber}`;
+  const displayArchiveId = record.archiveId || archiveId;
 
   return `<!doctype html>
 <html lang="en">
@@ -322,6 +318,19 @@ function buildPageHtml(record, archiveId) {
       max-width: 40ch;
     }
 
+    .debug-box {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(0,0,0,0.04);
+      border: 1px solid rgba(0,0,0,0.08);
+      font-size: 12px;
+      line-height: 1.6;
+      color: #333;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
     @media (max-width: 980px) {
       .hero {
         grid-template-columns: 1fr;
@@ -428,7 +437,7 @@ function buildPageHtml(record, archiveId) {
             <div class="id-block">
               <div class="id-row">
                 <div class="id-label">Archive ID</div>
-                <div class="id-value">${escapeHtml(archiveId)}</div>
+                <div class="id-value">${escapeHtml(displayArchiveId)}</div>
               </div>
 
               <div class="id-row">
@@ -475,14 +484,14 @@ function buildPageHtml(record, archiveId) {
 
     <div class="page-footer">
       <div>GLAMOPH Verification System</div>
-      <div>${escapeHtml(archiveId)}</div>
+      <div>${escapeHtml(displayArchiveId)}</div>
     </div>
   </div>
 </body>
 </html>`;
 }
 
-function buildErrorHtml(title, message) {
+function buildErrorHtml(title, message, debugText = "") {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -532,6 +541,18 @@ function buildErrorHtml(title, message) {
       color: rgba(19,19,19,0.62);
       max-width: 38ch;
     }
+    .debug-box {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(0,0,0,0.04);
+      border: 1px solid rgba(0,0,0,0.08);
+      font-size: 12px;
+      line-height: 1.6;
+      color: #333;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
   </style>
 </head>
 <body>
@@ -540,6 +561,7 @@ function buildErrorHtml(title, message) {
     <div class="card">
       <h1>${escapeHtml(title)}</h1>
       <p>${escapeHtml(message)}</p>
+      ${debugText ? `<div class="debug-box">${escapeHtml(debugText)}</div>` : ""}
     </div>
   </div>
 </body>
@@ -568,18 +590,50 @@ app.get("/:archiveId", async (req, res) => {
       );
     }
 
-    const response = await fetch(recordJsonUrl(archiveId), {
+    const primaryUrl = recordJsonUrl(archiveId);
+    const legacyUrl = legacyRecordJsonUrl(archiveId);
+
+    console.log("VERIFY archiveId:", archiveId);
+    console.log("VERIFY primaryUrl:", primaryUrl);
+    console.log("VERIFY legacyUrl:", legacyUrl);
+    console.log("VERIFY env:", {
+      ARCHIVE_OWNER,
+      ARCHIVE_REPO,
+      ARCHIVE_BRANCH,
+    });
+
+    let response = await fetch(primaryUrl, {
       headers: {
         "User-Agent": "glamoph-verify",
         Accept: "application/json",
       },
     });
 
+    let resolvedUrl = primaryUrl;
+
+    if (response.status === 404) {
+      response = await fetch(legacyUrl, {
+        headers: {
+          "User-Agent": "glamoph-verify",
+          Accept: "application/json",
+        },
+      });
+      resolvedUrl = legacyUrl;
+    }
+
     if (response.status === 404) {
       return res.status(404).send(
         buildErrorHtml(
           "Record Not Found",
-          "This certificate record does not exist in the public archive."
+          "This certificate record does not exist in the public archive.",
+          [
+            `archiveId: ${archiveId}`,
+            `primaryUrl: ${primaryUrl}`,
+            `legacyUrl: ${legacyUrl}`,
+            `ARCHIVE_OWNER: ${ARCHIVE_OWNER}`,
+            `ARCHIVE_REPO: ${ARCHIVE_REPO}`,
+            `ARCHIVE_BRANCH: ${ARCHIVE_BRANCH}`,
+          ].join("\n")
         )
       );
     }
@@ -591,13 +645,18 @@ app.get("/:archiveId", async (req, res) => {
 
     const record = await response.json();
 
+    console.log("VERIFY resolvedUrl:", resolvedUrl);
+    console.log("VERIFY record loaded:", record);
+
     return res.status(200).send(buildPageHtml(record, archiveId));
   } catch (error) {
-    console.error(error);
+    console.error("VERIFY ERROR:", error);
+
     return res.status(500).send(
       buildErrorHtml(
         "Verification Unavailable",
-        "The certificate page could not be loaded right now."
+        "The certificate page could not be loaded right now.",
+        String(error && error.stack ? error.stack : error)
       )
     );
   }
