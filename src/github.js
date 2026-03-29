@@ -36,9 +36,12 @@ function encodeJson(obj) {
 async function getFile(path) {
   assertEnv();
 
-  const res = await fetch(`${contentApiUrl(path)}?ref=${encodeURIComponent(BRANCH)}`, {
-    headers: ghHeaders(),
-  });
+  const res = await fetch(
+    `${contentApiUrl(path)}?ref=${encodeURIComponent(BRANCH)}`,
+    {
+      headers: ghHeaders(),
+    }
+  );
 
   if (res.status === 404) return null;
 
