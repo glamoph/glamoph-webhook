@@ -38,9 +38,16 @@ function imageUrlFromRecord(record) {
 function buildPageHtml(record, archiveId) {
   const title = record.title || "Untitled";
   const artworkCode = record.artworkCode || "";
-  const editionNumber = formatEdition(record.editionNumber || 1);
+
+  // 数値（内部用）
+  const rawEditionNumber = record.editionNumber || 1;
+
+  // 表示用（001）
+  const editionNumber = String(rawEditionNumber).padStart(3, "0");
+
   const handle = record.handle || "";
   const productId = record.productId || "";
+
   const createdAt = record.createdAt
     ? new Date(record.createdAt).toLocaleString("en-US", {
         year: "numeric",
@@ -48,7 +55,12 @@ function buildPageHtml(record, archiveId) {
         day: "numeric",
       })
     : "";
+
   const imageUrl = imageUrlFromRecord(record);
+
+  // ★ ここが最重要（追加）
+  const displayArchiveId =
+    record.archiveId || `GLA-${artworkCode}-${editionNumber}`;
 
   return `<!doctype html>
 <html lang="en">
