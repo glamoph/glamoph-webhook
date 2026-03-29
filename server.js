@@ -1,6 +1,7 @@
 const express = require("express");
 const { verifyShopifyWebhook } = require("./lib/webhook-verify");
 const { syncProductFeaturedImageToGitHub } = require("./lib/image-sync");
+const { syncRecordToGitHub } = require("./lib/record-sync");
 
 const app = express();
 
