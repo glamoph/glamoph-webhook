@@ -27,7 +27,7 @@ app.get("/:archiveId", (req, res) => {
    * 👉 GitHub Pages にリダイレクト
    * ※ここが今回の本質
    */
-  const redirectUrl = `https://glamoph.github.io/glamoph-archive/${archiveId}`;
+  const redirectUrl = `https://glamoph.github.io/glamoph-archive/?id=${archiveId}`;
 
   console.log("Redirecting to:", redirectUrl);
 
