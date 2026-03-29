@@ -74,6 +74,28 @@ app.post("/tools/sync-product-image", async (req, res) => {
   }
 });
 
+app.post("/tools/sync-record", async (req, res) => {
+  try {
+    const { productId, editionNumber } = req.body || {};
+
+    const result = await syncRecordToGitHub(
+      productId,
+      Number(editionNumber || 1)
+    );
+
+    return res.status(200).json({
+      ok: true,
+      result,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      ok: false,
+      error: err.message,
+    });
+  }
+});
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Listening on :${port}`);
