@@ -1,4 +1,6 @@
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 app.use(express.json());
@@ -47,6 +49,33 @@ function parseLineItem(item) {
   };
 }
 
+function createRecord(recordId, parsed) {
+  const dir = path.join(__dirname, "records");
+
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  const filePath = path.join(dir, `${recordId}.json`);
+
+  const data = {
+    verified: "Artwork Verified",
+    title: parsed.title,
+    artworkId: recordId,
+    edition: `Edition ${recordId.split("-").pop()} / ${parsed.editionTotal}`,
+    artist: "GLAMOPH",
+    medium: "Archival pigment print on fine art paper",
+    size: parsed.sizeLabel,
+    frame: parsed.frame,
+    archiveDate: new Date().toISOString().split("T")[0],
+    image: parsed.imageFile,
+  };
+
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
+
+  console.log("Record created:", recordId);
+}
+
 app.post("/webhooks/shopify/orders-paid", (req, res) => {
   const order = req.body;
 
@@ -77,10 +106,9 @@ app.post("/webhooks/shopify/orders-paid", (req, res) => {
 
     console.log("Parsed item:", parsed);
 
-    // 仮ログ
-    console.log(
-      `Create record → GLA-${parsed.artworkCode}-${parsed.sizeCode}-001`
-    );
+    const recordId = `GLA-${parsed.artworkCode}-${parsed.sizeCode}-001`;
+
+    createRecord(recordId, parsed);
   }
 
   res.status(200).send("OK");
