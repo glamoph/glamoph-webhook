@@ -2,6 +2,7 @@ console.log("🚀 GLAMOPH VERIFY (REDIRECT + WEBHOOK)");
 
 const express = require("express");
 const crypto = require("crypto");
+const path = require("path");
 
 const { verifyShopifyWebhook } = require("./lib/webhook-verify");
 const { readJsonFile, writeJsonFile } = require("./lib/github-contents");
