@@ -334,7 +334,7 @@ app.get("/:archiveId", (req, res) => {
     return res.status(400).send("Invalid Archive ID");
   }
 
-  const redirectUrl = `${VERIFY_PUBLIC_BASE_URL}/${archiveId}`;
+  const redirectUrl = `https://glamoph.github.io/glamoph-archive/?id=${archiveId}`;
 
   console.log("Redirecting to:", redirectUrl);
 
