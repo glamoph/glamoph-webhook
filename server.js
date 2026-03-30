@@ -172,66 +172,72 @@ async function processOrderWebhook(order) {
   const issuedIndex = await getIssuedIndex();
 
   for (const item of lineItems) {
-    const lineItemId = item?.id;
-    if (!lineItemId) continue;
+  const lineItemId = item?.id;
+  if (!lineItemId) continue;
 
-    if (issuedIndex[String(lineItemId)]) {
-      console.log("Already issued. Skip:", lineItemId);
-      continue;
+  if (issuedIndex[String(lineItemId)]) {
+    console.log("Already issued. Skip:", lineItemId);
+    continue;
+  }
+
+  const sku = String(item?.sku || "").trim().toUpperCase();
+  const productId = item?.product_id;
+  const title = item?.title || "";
+
+  if (!sku || !sku.startsWith("GLAMOPH-")) {
+    console.log("Skip non-artwork SKU:", sku);
+    continue;
+  }
+
+  const { artworkCode, sizeCode } = parseSku(sku);
+
+  console.log("LINE ITEM ID:", lineItemId);
+  console.log("SKU:", sku);
+  console.log("PRODUCT ID:", productId);
+  console.log("PARSED:", { artworkCode, sizeCode });
+
+  if (!artworkCode || !sizeCode) {
+    console.log("Skip line item due to invalid SKU:", sku);
+    continue;
+  }
+
+  if (!productId) {
+    console.log("Skip line item due to missing product_id:", lineItemId);
+    continue;
+  }
+
+  const { editionNumber, editionTotal } = await getNextEdition({
+    artworkCode,
+    sizeCode,
+  });
+
+  const publicId = buildPublicId({
+    artworkCode,
+    sizeCode,
+    editionNumber,
+  });
+
+  const internalId = buildInternalId(publicId);
+
+  console.log("ISSUE START:", publicId);
+
+  let imageResult = {
+    filePath: `images/${artworkCode}.jpg`,
+  };
+
+  try {
+    console.log("BEFORE IMAGE SYNC:", publicId);
+    const syncedImage = await syncProductFeaturedImageToGitHub(productId);
+
+    if (syncedImage?.filePath) {
+      imageResult = syncedImage;
     }
 
-    const sku = String(item?.sku || "").trim().toUpperCase();
-    const productId = item?.product_id;
-    const title = item?.title || "";
-    const { artworkCode, sizeCode } = parseSku(sku);
-
-    console.log("LINE ITEM ID:", lineItemId);
-    console.log("SKU:", sku);
-    console.log("PRODUCT ID:", productId);
-    console.log("PARSED:", { artworkCode, sizeCode });
-
-    if (!artworkCode || !sizeCode) {
-      console.log("Skip line item due to invalid SKU:", sku);
-      continue;
-    }
-
-    if (!productId) {
-      console.log("Skip line item due to missing product_id:", lineItemId);
-      continue;
-    }
-
-    const { editionNumber, editionTotal } = await getNextEdition({
-      artworkCode,
-      sizeCode,
-    });
-
-    const publicId = buildPublicId({
-      artworkCode,
-      sizeCode,
-      editionNumber,
-    });
-
-    const internalId = buildInternalId(publicId);
-
-    console.log("ISSUE START:", publicId);
-
-    let imageResult = {
-      filePath: `images/${artworkCode}.jpg`,
-    };
-
-    try {
-      console.log("BEFORE IMAGE SYNC:", publicId);
-      const syncedImage = await syncProductFeaturedImageToGitHub(productId);
-
-      if (syncedImage?.filePath) {
-        imageResult = syncedImage;
-      }
-
-      console.log("IMAGE SYNC RESULT:", imageResult);
-    } catch (error) {
-      console.error("Image sync failed:", error);
-      console.log("FALLBACK IMAGE PATH:", imageResult.filePath);
-    }
+    console.log("IMAGE SYNC RESULT:", imageResult);
+  } catch (error) {
+    console.error("Image sync failed:", error);
+    console.log("FALLBACK IMAGE PATH:", imageResult.filePath);
+  }
 
     const record = {
       verified: "Artwork Verified",
