@@ -1,4 +1,4 @@
-console.log("🚀 GLAMOPH VERIFY (REDIRECT + WEBHOOK)");
+console.log("🔥 WEBHOOK HIT");
 
 const express = require("express");
 const crypto = require("crypto");
