@@ -10,8 +10,7 @@ const { syncProductFeaturedImageToGitHub } = require("./lib/image-sync");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const VERIFY_PUBLIC_BASE_URL =
-  (process.env.VERIFY_PUBLIC_BASE_URL || "https://verify.glamoph.com").replace(/\/+$/, "");
+const VERIFY_PUBLIC_BASE_URL = "https://glamoph-verify-production.up.railway.app";
 
 app.get("/", (req, res) => {
   res.send("GLAMOPH Verify System");
