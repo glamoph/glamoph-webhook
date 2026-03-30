@@ -10,6 +10,15 @@ const { syncProductFeaturedImageToGitHub } = require("./lib/image-sync");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 const VERIFY_PUBLIC_BASE_URL =
   (process.env.VERIFY_PUBLIC_BASE_URL || "https://verify.glamoph.com").replace(/\/+$/, "");
 
