@@ -181,30 +181,81 @@ async function processOrderWebhook(order) {
   }
 
   const sku = String(item?.sku || "").trim().toUpperCase();
-  const productId = item?.product_id;
-  const title = item?.title || "";
+const productId = item?.product_id;
+const title = String(item?.title || "").trim();
+const variantTitle = String(item?.variant_title || "").trim().toUpperCase();
 
-  if (!sku || !sku.startsWith("GLAMOPH-")) {
-    console.log("Skip non-artwork SKU:", sku);
-    continue;
-  }
+// 明らかに作品ではないものを除外
+const nonArtworkKeywords = [
+  "LENS-PROTECT",
+  "CASE-LEATHER",
+  "PROTECT",
+  "2YR",
+  "PREM",
+];
 
-  const { artworkCode, sizeCode } = parseSku(sku);
+const looksLikeNonArtwork =
+  nonArtworkKeywords.some((kw) => sku.includes(kw)) ||
+  nonArtworkKeywords.some((kw) => variantTitle.includes(kw)) ||
+  /protect|case|leather/i.test(title);
 
-  console.log("LINE ITEM ID:", lineItemId);
-  console.log("SKU:", sku);
-  console.log("PRODUCT ID:", productId);
-  console.log("PARSED:", { artworkCode, sizeCode });
+if (looksLikeNonArtwork) {
+  console.log("Skip non-artwork line item:", {
+    title,
+    sku,
+    variantTitle,
+  });
+  continue;
+}
 
-  if (!artworkCode || !sizeCode) {
-    console.log("Skip line item due to invalid SKU:", sku);
-    continue;
-  }
+let artworkCode = "";
+let sizeCode = "";
 
-  if (!productId) {
-    console.log("Skip line item due to missing product_id:", lineItemId);
-    continue;
-  }
+// まずSKUから取る
+if (sku) {
+  const parsed = parseSku(sku);
+  artworkCode = parsed.artworkCode || "";
+  sizeCode = parsed.sizeCode || "";
+}
+
+// SKUが空 or 不完全なら title / variant_title から補完
+if (!artworkCode) {
+  // まず既知の作品タイトルに対する暫定マップ
+  const artworkMap = {
+    "A BIG WORLD IN A SMALL TANK": "ABWIAST",
+  };
+
+  artworkCode = artworkMap[title.toUpperCase()] || "";
+}
+
+if (!sizeCode) {
+  if (/\bS\b/.test(variantTitle)) sizeCode = "S";
+  else if (/\bM\b/.test(variantTitle)) sizeCode = "M";
+  else if (/\bL\b/.test(variantTitle)) sizeCode = "L";
+}
+
+// ログ
+console.log("LINE ITEM ID:", lineItemId);
+console.log("TITLE:", title);
+console.log("SKU:", sku);
+console.log("VARIANT TITLE:", variantTitle);
+console.log("PRODUCT ID:", productId);
+console.log("PARSED:", { artworkCode, sizeCode });
+
+// 作品判定できなければスキップ
+if (!artworkCode || !sizeCode) {
+  console.log("Skip line item due to unresolved artwork/size:", {
+    title,
+    sku,
+    variantTitle,
+  });
+  continue;
+}
+
+if (!productId) {
+  console.log("Skip line item due to missing product_id:", lineItemId);
+  continue;
+}
 
   const { editionNumber, editionTotal } = await getNextEdition({
     artworkCode,
