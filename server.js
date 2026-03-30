@@ -1,4 +1,4 @@
-console.log("🔥 WEBHOOK HIT");
+console.log("🚀 GLAMOPH VERIFY (REDIRECT + WEBHOOK)");
 
 const express = require("express");
 const crypto = require("crypto");
@@ -10,7 +10,8 @@ const { syncProductFeaturedImageToGitHub } = require("./lib/image-sync");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const VERIFY_PUBLIC_BASE_URL = "https://glamoph-verify-production.up.railway.app";
+const VERIFY_PUBLIC_BASE_URL =
+  (process.env.VERIFY_PUBLIC_BASE_URL || "https://verify.glamoph.com").replace(/\/+$/, "");
 
 app.get("/", (req, res) => {
   res.send("GLAMOPH Verify System");
@@ -42,7 +43,6 @@ function normalizeMap(value) {
 }
 
 function parseSku(sku) {
-  // 想定: GLAMOPH-ABWIAST-L-BLK
   const raw = String(sku || "").trim().toUpperCase();
   const parts = raw.split("-").filter(Boolean);
 
@@ -160,6 +160,10 @@ async function processOrderWebhook(order) {
   const createdAt = order?.created_at || new Date().toISOString();
   const lineItems = Array.isArray(order?.line_items) ? order.line_items : [];
 
+  console.log("ORDER ID:", orderId);
+  console.log("ORDER NAME:", orderName);
+  console.log("LINE ITEMS:", lineItems.length);
+
   if (!orderId || lineItems.length === 0) {
     console.log("No order id or line items. Skip.");
     return;
@@ -180,6 +184,11 @@ async function processOrderWebhook(order) {
     const productId = item?.product_id;
     const title = item?.title || "";
     const { artworkCode, sizeCode } = parseSku(sku);
+
+    console.log("LINE ITEM ID:", lineItemId);
+    console.log("SKU:", sku);
+    console.log("PRODUCT ID:", productId);
+    console.log("PARSED:", { artworkCode, sizeCode });
 
     if (!artworkCode || !sizeCode) {
       console.log("Skip line item due to invalid SKU:", sku);
@@ -204,7 +213,25 @@ async function processOrderWebhook(order) {
 
     const internalId = buildInternalId(publicId);
 
-    const imageResult = await syncProductFeaturedImageToGitHub(productId);
+    console.log("ISSUE START:", publicId);
+
+    let imageResult = {
+      filePath: `images/${artworkCode}.jpg`,
+    };
+
+    try {
+      console.log("BEFORE IMAGE SYNC:", publicId);
+      const syncedImage = await syncProductFeaturedImageToGitHub(productId);
+
+      if (syncedImage?.filePath) {
+        imageResult = syncedImage;
+      }
+
+      console.log("IMAGE SYNC RESULT:", imageResult);
+    } catch (error) {
+      console.error("Image sync failed:", error);
+      console.log("FALLBACK IMAGE PATH:", imageResult.filePath);
+    }
 
     const record = {
       verified: "Artwork Verified",
@@ -245,13 +272,16 @@ async function processOrderWebhook(order) {
   }
 }
 
-// 本番: orders/paid を使う
 app.post(
   "/webhooks/orders-paid",
   express.raw({ type: "application/json", limit: "2mb" }),
   async (req, res) => {
+    console.log("WEBHOOK RECEIVED:", req.path);
+
     const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body || "");
     const hmac = req.get("X-Shopify-Hmac-Sha256") || "";
+
+    console.log("HMAC EXISTS:", Boolean(hmac));
 
     let verified = false;
 
@@ -273,7 +303,6 @@ app.post(
       return res.status(400).send("Invalid JSON");
     }
 
-    // 先に 200 を返す
     res.status(200).send("ok");
 
     setImmediate(async () => {
@@ -286,13 +315,16 @@ app.post(
   }
 );
 
-// テスト用: orders/create も残しておく
 app.post(
   "/webhooks/orders-create",
   express.raw({ type: "application/json", limit: "2mb" }),
   async (req, res) => {
+    console.log("WEBHOOK RECEIVED:", req.path);
+
     const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body || "");
     const hmac = req.get("X-Shopify-Hmac-Sha256") || "";
+
+    console.log("HMAC EXISTS:", Boolean(hmac));
 
     let verified = false;
 
@@ -326,7 +358,6 @@ app.post(
   }
 );
 
-// Redirect は最後
 app.get("/:archiveId", (req, res) => {
   const archiveId = String(req.params.archiveId || "").trim().toUpperCase();
 
