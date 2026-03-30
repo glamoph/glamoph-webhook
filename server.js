@@ -302,7 +302,7 @@ if (!productId) {
       medium: "Archival pigment print on fine art paper",
       size: resolveSizeLabel(sizeCode),
       archiveDate: formatArchiveDate(createdAt),
-      archiveUrl: `${VERIFY_PUBLIC_BASE_URL}/${publicId}`,
+      archiveUrl: `${VERIFY_PUBLIC_BASE_URL}/${internalId}`,
       image: `/${imageResult.filePath}`,
       artworkCode,
       sizeCode,
