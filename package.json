@@ -4,6 +4,7 @@
   "type": "commonjs",
   "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "dev": "node server.js"
   },
   "dependencies": {
