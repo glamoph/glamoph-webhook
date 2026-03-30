@@ -415,18 +415,118 @@ app.post(
   }
 );
 
-app.get("/:archiveId", (req, res) => {
-  const archiveId = String(req.params.archiveId || "").trim().toUpperCase();
+app.get("/:recordId", async (req, res) => {
+  const recordId = String(req.params.recordId || "").trim().toUpperCase();
 
-  if (!archiveId) {
-    return res.status(400).send("Invalid Archive ID");
+  if (!recordId) {
+    return res.status(400).send("Invalid Record ID");
   }
 
-  const redirectUrl = `https://glamoph.github.io/glamoph-archive/?id=${archiveId}`;
+  try {
+    const file = await readJsonFile(`records/${recordId}/data.json`, null);
 
-  console.log("Redirecting to:", redirectUrl);
+    if (!file?.data) {
+      return res.status(404).send("Record not found");
+    }
 
-  return res.redirect(redirectUrl);
+    const record = file.data;
+
+    const imageUrl = record.image || "";
+    const safeTitle = escapeHtml(record.title || "Untitled");
+    const safeArtworkId = escapeHtml(record.archiveId || recordId);
+    const safeEdition = escapeHtml(
+      record.edition ||
+      (
+        record.editionNumber && record.editionTotal
+          ? `${String(record.editionNumber).padStart(2, "0")} / ${record.editionTotal}`
+          : "—"
+      )
+    );
+    const safeArtist = escapeHtml(record.artist || "GLAMOPH");
+    const safeMedium = escapeHtml(record.medium || "");
+    const safeSize = escapeHtml(record.size || "");
+    const safeArchiveDate = escapeHtml(record.archiveDate || "");
+    const safeArchiveUrl = escapeHtml(record.archiveUrl || `${VERIFY_PUBLIC_BASE_URL}/${recordId}`);
+    const safeVerified = escapeHtml(record.verified || "Artwork Verified");
+
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    return res.status(200).send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GLAMOPH — ${safeTitle}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/archive.css?v=1" />
+</head>
+<body>
+  <main class="archive-page">
+    <section class="archive-sheet" aria-label="GLAMOPH archive record">
+      <div class="archive-shell">
+
+        <header class="archive-header">
+          <p class="archive-status">${safeVerified}</p>
+        </header>
+
+        <section class="archive-hero">
+          <div class="archive-hero__content">
+            <h1 class="archive-title">${safeTitle}</h1>
+
+            <div class="archive-meta-line">
+              <p class="archive-meta-item">
+                <span class="archive-meta-label">Artwork ID</span>
+                <span class="archive-meta-value">${safeArtworkId}</span>
+              </p>
+
+              <p class="archive-meta-divider">/</p>
+
+              <p class="archive-meta-item">
+                <span class="archive-meta-label">Edition</span>
+                <span class="archive-meta-value">${safeEdition}</span>
+              </p>
+            </div>
+          </div>
+
+          <figure class="archive-artwork">
+            ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${safeTitle}" />` : ""}
+          </figure>
+        </section>
+
+        <section class="archive-record">
+          <div class="archive-record__inner">
+            <div class="archive-record__heading-wrap">
+              <h2 class="archive-record__heading">Record</h2>
+            </div>
+
+            <dl class="archive-record__grid">
+              <div class="archive-record__row"><dt>Title</dt><dd>${safeTitle}</dd></div>
+              <div class="archive-record__row"><dt>Artist</dt><dd>${safeArtist}</dd></div>
+              <div class="archive-record__row"><dt>Medium</dt><dd>${safeMedium}</dd></div>
+              <div class="archive-record__row"><dt>Size</dt><dd>${safeSize}</dd></div>
+              <div class="archive-record__row"><dt>Archive Date</dt><dd>${safeArchiveDate}</dd></div>
+              <div class="archive-record__row archive-record__row--url"><dt>Archive URL</dt><dd><a href="${safeArchiveUrl}" target="_blank" rel="noopener noreferrer">${safeArchiveUrl}</a></dd></div>
+            </dl>
+          </div>
+        </section>
+
+        <footer class="archive-footer">
+          <button class="archive-download" type="button" onclick="window.print()">Download PDF</button>
+          <div class="archive-signature-wrap">
+            <img class="archive-signature" src="/assets/signature.png" alt="GLAMOPH signature" />
+          </div>
+        </footer>
+
+      </div>
+    </section>
+  </main>
+</body>
+</html>`);
+  } catch (error) {
+    console.error("Verify page error:", error);
+    return res.status(500).send("Internal Server Error");
+  }
 });
 
 app.listen(PORT, () => {
