@@ -10,6 +10,8 @@ const { syncProductFeaturedImageToGitHub } = require("./lib/image-sync");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(express.static(path.join(__dirname, "public")));
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
