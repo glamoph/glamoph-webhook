@@ -524,6 +524,10 @@ html.is-printing .archive-download {
   .archive-owner {
     opacity: 0.75;                /* ↓ 少し強くする（差をつける） */
   }
+  .archive-status,
+  .archive-owner {
+    display: block;
+  }
 }
 
 @page {
