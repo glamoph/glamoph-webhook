@@ -155,9 +155,11 @@ function buildPageHtml(record, recordId, options = {}) {
     <section class="archive-shell">
 
       <header class="archive-header">
-        <p class="archive-status">${safeVerified}</p>
-        ${isOwner ? `<p class="archive-owner">Authenticated Holder</p>` : ""}
-      </header>
+  <div class="archive-status-line">
+    <span class="archive-status">${safeVerified}</span>
+    ${isOwner ? `<span class="archive-status-divider">/</span><span class="archive-owner">Authenticated Holder</span>` : ""}
+  </div>
+</header>
 
       <section class="archive-hero">
         <div class="archive-hero__content">
