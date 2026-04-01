@@ -499,17 +499,36 @@ html.is-printing .archive-download {
   }
 
    .archive-header {
-    display: block!important;
-    margin-bottom: 12px!important;
+    display: block !important;
+    margin-bottom: 12px !important;
   }
 
   .archive-status-line {
-    display: block!important;
-    text-align: left!important;
+    display: block !important;
+    text-align: left !important;
+  }
+
+  .archive-status,
+  .archive-owner {
+    display: block !important;
+    margin: 0 !important;
   }
 
   .archive-status-divider {
-    display: inline!important;
+    display: none !important;
+  }
+
+  .archive-status {
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0.14em !important;
+  }
+
+  .archive-owner {
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0.14em !important;
+    opacity: 0.72 !important;
   }
 }
 
