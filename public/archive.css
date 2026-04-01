@@ -500,35 +500,28 @@ html.is-printing .archive-download {
 
    .archive-header {
     display: block !important;
-    margin-bottom: 12px !important;
+    width: 100% !important;
+    margin: 0 0 12px 0 !important;
+    text-align: left !important;
   }
 
   .archive-status-line {
     display: block !important;
+    width: auto !important;
+    margin: 0 !important;
     text-align: left !important;
   }
 
   .archive-status,
   .archive-owner {
     display: block !important;
+    width: auto !important;
     margin: 0 !important;
+    text-align: left !important;
   }
 
   .archive-status-divider {
     display: none !important;
-  }
-
-  .archive-status {
-    font-size: 11px !important;
-    line-height: 1.2 !important;
-    letter-spacing: 0.14em !important;
-  }
-
-  .archive-owner {
-    font-size: 11px !important;
-    line-height: 1.2 !important;
-    letter-spacing: 0.14em !important;
-    opacity: 0.72 !important;
   }
 }
 
