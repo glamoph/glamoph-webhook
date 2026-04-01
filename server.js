@@ -119,7 +119,9 @@ function resolveRecordImageUrl(value) {
   return `${ARCHIVE_ASSET_BASE_URL}/${raw}`;
 }
 
-function buildPageHtml(record, recordId) {
+function buildPageHtml(record, recordId, options = {}) {
+  const { isOwner } = options;
+
   const imageUrl = resolveRecordImageUrl(record.image || "");
   const safeTitle = escapeHtml(record.title || "Untitled");
   const safeVerified = escapeHtml(record.verified || "Artwork Verified");
@@ -154,9 +156,10 @@ function buildPageHtml(record, recordId) {
 
       <header class="archive-header">
         <p class="archive-status">${safeVerified}</p>
+        ${isOwner ? `<p class="archive-owner">Owner Verified</p>` : ""}
       </header>
 
-     <section class="archive-hero">
+      <section class="archive-hero">
         <div class="archive-hero__content">
           <h1 class="archive-title">${safeTitle}</h1>
 
@@ -223,12 +226,12 @@ function buildPageHtml(record, recordId) {
 
             <div class="archive-record__row archive-record__row--url">
               <dt>Archive URL</dt>
-              <dd><a href="${safeArchiveUrl}" target="_blank" rel="noopener noreferrer">${safeArchiveUrl}</a></dd>
+              <dd><a href="${safeArchiveUrl}" target="_blank">${safeArchiveUrl}</a></dd>
             </div>
           </dl>
         </div>
       </section>
-      
+
       <footer class="archive-footer">
         <button class="archive-download" type="button" onclick="window.print()">Download PDF</button>
 
