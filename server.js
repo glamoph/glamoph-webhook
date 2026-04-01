@@ -560,21 +560,29 @@ app.post(
 );
 
 app.get("/:recordId", async (req, res) => {
-  const recordId = String(req.params.recordId || "").trim().toUpperCase();
+  const publicId = String(req.params.recordId || "").trim().toUpperCase();
 
-  if (!recordId) {
+  if (!publicId) {
     return res.status(400).send("Invalid Record ID");
   }
 
   try {
-    const file = await readJsonFile(`records/${recordId}/data.json`, null);
+    const logFile = await readJsonFile("records-log.json", {});
+    const recordsLog = normalizeMap(logFile?.data);
+    const internalId = String(recordsLog[publicId] || "").trim();
+
+    if (!internalId) {
+      return res.status(404).send("Record not found");
+    }
+
+    const file = await readJsonFile(`records/${internalId}/data.json`, null);
 
     if (!file?.data) {
       return res.status(404).send("Record not found");
     }
 
     const record = file.data;
-    const html = buildPageHtml(record, recordId);
+    const html = buildPageHtml(record, publicId);
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     return res.status(200).send(html);
