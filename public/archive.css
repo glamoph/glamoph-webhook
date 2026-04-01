@@ -483,18 +483,21 @@ html.is-printing .archive-download {
   }
 
    .archive-header {
-    display: block !important;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 16px;
   }
 
   .archive-status-line {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
     gap: 2px;
   }
 
   .archive-status-divider {
-    display: none !important;
+    display: none;
   }
 }
 
