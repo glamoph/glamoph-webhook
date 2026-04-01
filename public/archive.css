@@ -198,6 +198,22 @@ button {
   color: var(--ink);
 }
 
+archive-meta-id {
+  font-family: "Courier New", monospace !important;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  color: var(--muted);
+}
+
+archive-meta-edition {
+  font-family: "Courier New", monospace !important;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  color: var(--muted);
+}
+
 .archive-meta-value {
   font-family: "Courier New", monospace !important;
   font-size: 13px;
