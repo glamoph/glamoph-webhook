@@ -482,15 +482,19 @@ html.is-printing .archive-download {
     filter: none;
   }
 
+   .archive-header {
+    display: block !important;
+  }
+
   .archive-status-line {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
     gap: 2px;
   }
 
   .archive-status-divider {
-    display: none;
+    display: none !important;
   }
 }
 
