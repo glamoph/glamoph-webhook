@@ -104,10 +104,10 @@ button {
 }
 
 .archive-status-line {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
+  margin: 0;
+    font-size: 13px;
+    color: rgba(20, 20, 20, 0.35);
+    transform: translateY(-1px);
 }
 .archive-status {
   margin: 0;
