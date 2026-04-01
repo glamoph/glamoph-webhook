@@ -137,9 +137,11 @@ button {
 
 .archive-owner {
   font-family: "Courier New", monospace !important;
-  margin: 0;
   font-size: 13px;
-  letter-spacing: 0.04em;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  color: var(--muted);
+  margin: 0;
   color: rgba(0, 0, 0, 0.58);
   text-align: right;
 }
