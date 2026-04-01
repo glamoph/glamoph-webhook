@@ -106,10 +106,17 @@ button {
 }
 
 .archive-status-line {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+
   margin: 0;
-    font-size: 13px;
-    color: rgba(20, 20, 20, 0.35);
-    transform: translateY(-1px);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+
+  color: rgba(20, 20, 20, 0.45);
 }
 .archive-status {
   margin: 0;
