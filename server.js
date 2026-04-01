@@ -446,7 +446,7 @@ async function processOrderWebhook(order) {
       medium: "Archival pigment print on fine art paper",
       size: resolveSizeLabel(sizeCode),
       archiveDate: formatArchiveDate(createdAt),
-      archiveUrl: `${VERIFY_PUBLIC_BASE_URL}/${internalId}`,
+      archiveUrl: `${VERIFY_PUBLIC_BASE_URL}/${publicId}`,
       image: `/${imageResult.filePath}`,
       artworkCode,
       sizeCode,
