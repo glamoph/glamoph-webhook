@@ -146,15 +146,6 @@ button {
   text-align: right;
 }
 
-.archive-owner {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.2;
-  letter-spacing: 0.14em;
-  font-weight: 500;
-  color: var(--muted);
-  text-transform: uppercase;
-}
 
 .archive-hero {
   display: grid;
