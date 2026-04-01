@@ -181,52 +181,54 @@ function buildPageHtml(record, recordId) {
       </section>
 
       <section class="archive-record">
-        <div class="archive-record-inner">
-          <h2 class="archive-record-heading">Record</h2>
+        <div class="archive-record__inner">
+          <div class="archive-record__heading-wrap">
+            <h2 class="archive-record__heading">Record</h2>
+          </div>
 
-          <dl class="archive-record-grid">
-            <div class="archive-record-row">
+          <dl class="archive-record__grid">
+            <div class="archive-record__row">
               <dt>Title</dt>
               <dd>${safeTitle}</dd>
             </div>
 
-            <div class="archive-record-row">
+            <div class="archive-record__row">
               <dt>Artist</dt>
               <dd>${safeArtist}</dd>
             </div>
 
-            <div class="archive-record-row">
+            <div class="archive-record__row">
               <dt>Medium</dt>
               <dd>${safeMedium}</dd>
             </div>
 
-            <div class="archive-record-row">
+            <div class="archive-record__row">
               <dt>Size</dt>
               <dd>${safeSize}</dd>
             </div>
 
             ${
               safeFrame
-                ? `<div class="archive-record-row">
+                ? `<div class="archive-record__row">
               <dt>Frame</dt>
               <dd>${safeFrame}</dd>
             </div>`
                 : ""
             }
 
-            <div class="archive-record-row">
+            <div class="archive-record__row">
               <dt>Archive Date</dt>
               <dd>${safeArchiveDate}</dd>
             </div>
 
-            <div class="archive-record-row archive-record-row-url">
+            <div class="archive-record__row archive-record__row--url">
               <dt>Archive URL</dt>
               <dd><a href="${safeArchiveUrl}" target="_blank" rel="noopener noreferrer">${safeArchiveUrl}</a></dd>
             </div>
           </dl>
         </div>
       </section>
-
+      
       <footer class="archive-footer">
         <button class="archive-download" type="button" onclick="window.print()">Download PDF</button>
 
