@@ -499,34 +499,45 @@ html.is-printing .archive-download {
   }
 
    .archive-header {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 18px;
+    display: block !important;
+    margin-bottom: 22px !important;
   }
 
   .archive-status-line {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    text-align: right;
-    gap: 1px;
-
-    font-size: 11px;              /* ↓ 少しだけ下げる */
-    letter-spacing: 0.12em;       /* ↑ 空気感を出す */
-    line-height: 1.3;
-    opacity: 0.55;                /* ↓ 主張を抑える */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    width: 100% !important;
+    gap: 0 !important;
+    text-align: right !important;
   }
 
   .archive-status-divider {
-    display: none;
+    display: none !important;
+  }
+
+  .archive-status,
+  .archive-owner {
+    display: block !important;
+    margin: 0 !important;
+  }
+
+  .archive-status {
+    font-size: 10px !important;
+    line-height: 1.15 !important;
+    letter-spacing: 0.14em !important;
+    color: rgba(20, 20, 20, 0.48) !important;
   }
 
   .archive-owner {
-    opacity: 0.75;                /* ↓ 少し強くする（差をつける） */
+    font-size: 10px !important;
+    line-height: 1.15 !important;
+    letter-spacing: 0.14em !important;
+    color: rgba(20, 20, 20, 0.34) !important;
   }
-  .archive-status,
-  .archive-owner {
-    display: block;
+  .archive-meta-line {
+    font-size: 11px !important;
+    letter-spacing: 0.06em !important;
   }
 }
 
