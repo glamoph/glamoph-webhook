@@ -166,18 +166,12 @@ function buildPageHtml(record, recordId, options = {}) {
           <h1 class="archive-title">${safeTitle}</h1>
 
           <div class="archive-meta-line">
-            <p class="archive-meta-item">
-              <span class="archive-meta-label">Artwork ID</span>
-              <span class="archive-meta-value">${safeArtworkId}</span>
-            </p>
-
-            <p class="archive-meta-divider">/</p>
-
-            <p class="archive-meta-item">
-              <span class="archive-meta-label">Edition</span>
-              <span class="archive-meta-value">${safeEdition}</span>
-            </p>
-          </div>
+  <span class="archive-meta-id">${safeArtworkId}</span>
+  <span class="archive-meta-divider">/</span>
+  <span class="archive-meta-edition" title="Edition number">
+  ${safeEdition}
+</span>
+</div>
         </div>
 
         <figure class="archive-artwork">
