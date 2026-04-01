@@ -135,7 +135,7 @@ function buildPageHtml(record, recordId) {
   const safeSize = escapeHtml(record.size || "");
   const safeFrame = escapeHtml(record.frame || "");
   const safeArchiveDate = escapeHtml(record.archiveDate || "");
-  const safeArchiveUrl = `${VERIFY_PUBLIC_BASE_URL}/${recordId}`;
+  const safeArchiveUrl = `${VERIFY_PUBLIC_BASE_URL}/${recordId}?v=test123`;
 
   return `<!DOCTYPE html>
 <html lang="en">
