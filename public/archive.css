@@ -481,6 +481,17 @@ html.is-printing .archive-download {
     opacity: 1;
     filter: none;
   }
+
+  .archive-status-line {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .archive-status-divider {
+    display: none;
+  }
 }
 
 @page {
