@@ -499,17 +499,17 @@ html.is-printing .archive-download {
   }
 
    .archive-header {
-    display: block;
-    margin-bottom: 12px;
+    display: block!important;
+    margin-bottom: 12px!important;
   }
 
   .archive-status-line {
-    display: block;
-    text-align: left;
+    display: block!important;
+    text-align: left!important;
   }
 
   .archive-status-divider {
-    display: inline;
+    display: inline!important;
   }
 }
 
