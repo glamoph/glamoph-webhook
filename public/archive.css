@@ -126,6 +126,7 @@ button {
   font-weight: 500;
   color: var(--muted);
   text-transform: uppercase;
+  text-align: right;
 }
 
 .archive-status-divider {
@@ -139,6 +140,7 @@ button {
   font-size: 13px;
   letter-spacing: 0.04em;
   color: rgba(0, 0, 0, 0.58);
+  text-align: right;
 }
 
 .archive-owner {
