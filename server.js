@@ -589,7 +589,11 @@ app.get("/:recordId", async (req, res) => {
     }
 
     const record = file.data;
-    const html = buildPageHtml(record, publicId);
+
+const token = String(req.query.t || "");
+const isOwner = token && record.ownerToken && token === record.ownerToken;
+
+const html = buildPageHtml(record, publicId, { isOwner });
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     return res.status(200).send(html);
