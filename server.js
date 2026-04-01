@@ -123,15 +123,14 @@ function buildPageHtml(record, recordId, options = {}) {
   const { isOwner } = options;
 
   const imageUrl = resolveRecordImageUrl(record.image || "");
-  const safeTitle = escapeHtml(record.title || "Untitled");
-  const safeVerified = escapeHtml(record.verified || "Artwork Verified");
-  const safeArtworkId = escapeHtml(record.archiveId || recordId);
-  const safeEdition = escapeHtml(
-    record.edition ||
-      (record.editionNumber && record.editionTotal
-        ? `${String(record.editionNumber).padStart(2, "0")} / ${record.editionTotal}`
-        : "—")
-  );
+const safeTitle = escapeHtml(record.title || "Untitled");
+const safeVerified = escapeHtml(record.verified || "Artwork Verified");
+const safeArtworkId = escapeHtml(record.archiveId || recordId);
+const safeEdition = escapeHtml(record.edition || "");
+const formattedEdition =
+  record.editionNumber && record.editionTotal
+    ? `${record.editionNumber} / ${record.editionTotal}`
+    : safeEdition;
   const safeArtist = escapeHtml(record.artist || "GLAMOPH");
   const safeMedium = escapeHtml(record.medium || "");
   const safeSize = escapeHtml(record.size || "");
