@@ -458,6 +458,7 @@ async function processOrderWebhook(order) {
       sku,
       createdAt,
       updatedAt: new Date().toISOString(),
+      ownerToken,
     };
 
     await createRecordFile(internalId, record);
