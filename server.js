@@ -436,6 +436,7 @@ async function processOrderWebhook(order) {
       console.log("FALLBACK IMAGE PATH:", imageResult.filePath);
     }
 
+    const ownerToken = crypto.randomBytes(6).toString("hex");
     const record = {
       verified: "Artwork Verified",
       title,
