@@ -156,22 +156,22 @@ function buildPageHtml(record, recordId) {
         <p class="archive-status">${safeVerified}</p>
       </header>
 
-      <section class="archive-hero">
-        <div class="archive-hero-copy">
+     <section class="archive-hero">
+        <div class="archive-hero__content">
           <h1 class="archive-title">${safeTitle}</h1>
 
           <div class="archive-meta-line">
-            <div class="archive-meta-block">
+            <p class="archive-meta-item">
               <span class="archive-meta-label">Artwork ID</span>
               <span class="archive-meta-value">${safeArtworkId}</span>
-            </div>
+            </p>
 
-            <div class="archive-meta-divider">/</div>
+            <p class="archive-meta-divider">/</p>
 
-            <div class="archive-meta-block">
+            <p class="archive-meta-item">
               <span class="archive-meta-label">Edition</span>
               <span class="archive-meta-value">${safeEdition}</span>
-            </div>
+            </p>
           </div>
         </div>
 
