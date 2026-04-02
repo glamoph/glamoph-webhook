@@ -379,8 +379,8 @@ async function processOrderWebhook(order) {
     }
 
     if (!artworkCode) {
-      artworkCode = artworkMap[title.toUpperCase()] || "";
-    }
+  console.log("No artworkCode resolved from SKU/title");
+}
 
     if (!sizeCode) {
       if (/\bS\b/.test(variantTitle)) sizeCode = "S";
