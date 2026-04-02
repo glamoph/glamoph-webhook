@@ -365,9 +365,6 @@ async function processOrderWebhook(order) {
       continue;
     }
 
-    let artworkCode = "";
-    let sizeCode = "";
-
         let artworkCode = "";
     let sizeCode = "";
 
@@ -381,7 +378,6 @@ async function processOrderWebhook(order) {
 
       artworkCode = parsed.artworkCode;
       sizeCode = parsed.sizeCode;
-      const frameCode = parsed.frameCode;
     }
 
     if (!artworkCode) {
