@@ -571,6 +571,14 @@ app.post(
   }
 );
 
+app.post(
+  "/admin/reissue-order",
+  express.json({ limit: "1mb" }),
+  async (req, res) => {
+    ...
+  }
+);
+
 app.get("/:recordId", async (req, res) => {
   const publicId = String(req.params.recordId || "").trim().toUpperCase();
 
