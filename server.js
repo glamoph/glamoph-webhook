@@ -446,29 +446,33 @@ const frameCode = parsed.frameCode;
 
     const ownerToken = crypto.randomBytes(6).toString("hex");
     const record = {
-      verified: "Artwork Verified",
-      title,
-      archiveId: publicId,
-      internalId,
-      edition: `${pad2(editionNumber)} / ${editionTotal}`,
-      editionNumber,
-      editionTotal,
-      artist: "GLAMOPH",
-      medium: "Archival pigment print on fine art paper",
-      size: resolveSizeLabel(sizeCode),
-      archiveDate: formatArchiveDate(createdAt),
-      archiveUrl: `${VERIFY_PUBLIC_BASE_URL}/${publicId}`,
-      image: `/${imageResult.filePath}`,
-      artworkCode,
-      sizeCode,
-      shopifyOrderId: orderId,
-      orderName,
-      lineItemId,
-      sku,
-      createdAt,
-      updatedAt: new Date().toISOString(),
-      ownerToken,
-    };
+  verified: "Artwork Verified",
+  title,
+  archiveId: publicId,
+  internalId,
+  edition: `${pad2(editionNumber)} / ${editionTotal}`,
+  editionNumber,
+  editionTotal,
+  artist: "GLAMOPH",
+  medium: "Archival pigment print on fine art paper",
+  size: resolveSizeLabel(sizeCode),
+
+  // ▼ここ追加（重要）
+  frame: frameCode === "BLK" ? "Black" : "White",
+
+  archiveDate: formatArchiveDate(createdAt),
+  archiveUrl: `${VERIFY_PUBLIC_BASE_URL}/${publicId}`,
+  image: `/${imageResult.filePath}`,
+  artworkCode,
+  sizeCode,
+  shopifyOrderId: orderId,
+  orderName,
+  lineItemId,
+  sku,
+  createdAt,
+  updatedAt: new Date().toISOString(),
+  ownerToken,
+};
 
     await createRecordFile(internalId, record);
     await updateRecordsLog(publicId, internalId);
