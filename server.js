@@ -57,20 +57,28 @@ function normalizeMap(value) {
   return value;
 }
 
-function parseSku(sku) {
-  const raw = String(sku || "").trim().toUpperCase();
-  const parts = raw.split("-").filter(Boolean);
+function parseSku(rawSku = "") {
+  const sku = String(rawSku).trim().toUpperCase();
 
-  if (parts.length < 3) {
+  // GLAMOPH-XXXXXX-S-BLK
+  const match = sku.match(/^GLAMOPH-([A-Z0-9]+)-([SML])-(BLK|WHT)$/);
+
+  if (!match) {
     return {
+      valid: false,
+      sku,
       artworkCode: "",
       sizeCode: "",
+      frameCode: "",
     };
   }
 
   return {
-    artworkCode: parts[1] || "",
-    sizeCode: parts[2] || "",
+    valid: true,
+    sku,
+    artworkCode: match[1],
+    sizeCode: match[2],
+    frameCode: match[3],
   };
 }
 
