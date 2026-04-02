@@ -312,6 +312,19 @@ async function createRecordFile(internalId, record) {
   );
 }
 
+function normalizeOrderId(value) {
+  return String(value || "").trim();
+}
+
+async function findIssuedByOrderId(orderId) {
+  const file = await readJsonFile("issued-index.json", {});
+  const issuedIndex = normalizeMap(file.data);
+
+  return Object.values(issuedIndex).filter((item) => {
+    return normalizeOrderId(item?.orderId) === normalizeOrderId(orderId);
+  });
+}
+
 async function processOrderWebhook(order) {
   const orderId = order?.id;
   const orderName = order?.name || "";
