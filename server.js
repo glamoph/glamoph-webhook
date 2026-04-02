@@ -575,7 +575,88 @@ app.post(
   "/admin/reissue-order",
   express.json({ limit: "1mb" }),
   async (req, res) => {
-    ...
+    try {
+      const adminToken = String(req.get("x-admin-token") || req.query.token || "").trim();
+      const expectedToken = String(process.env.ADMIN_REISSUE_TOKEN || "").trim();
+
+      if (!expectedToken || adminToken !== expectedToken) {
+        return res.status(401).json({ ok: false, error: "Unauthorized" });
+      }
+
+      const rawOrderId = req.body?.orderId;
+      const orderId = normalizeOrderId(rawOrderId);
+
+      if (!orderId) {
+        return res.status(400).json({ ok: false, error: "Missing orderId" });
+      }
+
+      const existing = await findIssuedByOrderId(orderId);
+      if (existing.length > 0) {
+        return res.status(200).json({
+          ok: true,
+          skipped: true,
+          reason: "Already issued",
+          orderId,
+          records: existing,
+        });
+      }
+
+      const shop = String(process.env.SHOPIFY_STORE_DOMAIN || "").trim();
+      const adminTokenValue = String(process.env.SHOPIFY_ADMIN_ACCESS_TOKEN || "").trim();
+
+      if (!shop || !adminTokenValue) {
+        return res.status(500).json({
+          ok: false,
+          error: "Missing SHOPIFY_STORE_DOMAIN or SHOPIFY_ADMIN_ACCESS_TOKEN",
+        });
+      }
+
+      const endpoint = `https://${shop}/admin/api/2025-01/orders/${orderId}.json?status=any`;
+
+      const response = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+          "X-Shopify-Access-Token": adminTokenValue,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        return res.status(response.status).json({
+          ok: false,
+          error: "Failed to fetch order from Shopify",
+          detail: text,
+        });
+      }
+
+      const data = await response.json();
+      const order = data?.order;
+
+      if (!order?.id) {
+        return res.status(404).json({
+          ok: false,
+          error: "Order not found",
+        });
+      }
+
+      await processOrderWebhook(order);
+
+      const created = await findIssuedByOrderId(order.id);
+
+      return res.status(200).json({
+        ok: true,
+        orderId: String(order.id),
+        createdCount: created.length,
+        records: created,
+      });
+    } catch (error) {
+      console.error("ADMIN REISSUE ERROR:", error);
+      return res.status(500).json({
+        ok: false,
+        error: error?.message || "Internal Server Error",
+      });
+    }
   }
 );
 
