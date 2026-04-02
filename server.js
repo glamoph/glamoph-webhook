@@ -381,11 +381,6 @@ sizeCode = parsed.sizeCode;
 const frameCode = parsed.frameCode;
     }
 
-    if (!artworkCode) {
-      const artworkMap = {
-        "A BIG WORLD IN A SMALL TANK": "ABWIAST",
-      };
-
       artworkCode = artworkMap[title.toUpperCase()] || "";
     }
 
