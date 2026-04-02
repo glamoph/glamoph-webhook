@@ -370,8 +370,15 @@ async function processOrderWebhook(order) {
 
     if (sku) {
       const parsed = parseSku(sku);
-      artworkCode = parsed.artworkCode || "";
-      sizeCode = parsed.sizeCode || "";
+
+if (!parsed.valid) {
+  console.log("Invalid SKU format:", sku);
+  continue;
+}
+
+artworkCode = parsed.artworkCode;
+sizeCode = parsed.sizeCode;
+const frameCode = parsed.frameCode;
     }
 
     if (!artworkCode) {
