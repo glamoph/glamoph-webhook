@@ -368,19 +368,23 @@ async function processOrderWebhook(order) {
     let artworkCode = "";
     let sizeCode = "";
 
+        let artworkCode = "";
+    let sizeCode = "";
+
     if (sku) {
       const parsed = parseSku(sku);
 
-if (!parsed.valid) {
-  console.log("Invalid SKU format:", sku);
-  continue;
-}
+      if (!parsed.valid) {
+        console.log("Invalid SKU format:", sku);
+        continue;
+      }
 
-artworkCode = parsed.artworkCode;
-sizeCode = parsed.sizeCode;
-const frameCode = parsed.frameCode;
+      artworkCode = parsed.artworkCode;
+      sizeCode = parsed.sizeCode;
+      const frameCode = parsed.frameCode;
     }
 
+    if (!artworkCode) {
       artworkCode = artworkMap[title.toUpperCase()] || "";
     }
 
