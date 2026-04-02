@@ -357,16 +357,13 @@ async function processOrderWebhook(order) {
       /protect|case|leather/i.test(title);
 
     if (looksLikeNonArtwork) {
-      console.log("Skip non-artwork line item:", {
-        title,
-        sku,
-        variantTitle,
-      });
+      console.log("Skip non-artwork line item:", { title, sku, variantTitle });
       continue;
     }
 
-        let artworkCode = "";
+    let artworkCode = "";
     let sizeCode = "";
+    let frameCode = "";
 
     if (sku) {
       const parsed = parseSku(sku);
@@ -378,6 +375,7 @@ async function processOrderWebhook(order) {
 
       artworkCode = parsed.artworkCode;
       sizeCode = parsed.sizeCode;
+      frameCode = parsed.frameCode;
     }
 
     if (!artworkCode) {
@@ -389,13 +387,6 @@ async function processOrderWebhook(order) {
       else if (/\bM\b/.test(variantTitle)) sizeCode = "M";
       else if (/\bL\b/.test(variantTitle)) sizeCode = "L";
     }
-
-    console.log("LINE ITEM ID:", lineItemId);
-    console.log("TITLE:", title);
-    console.log("SKU:", sku);
-    console.log("VARIANT TITLE:", variantTitle);
-    console.log("PRODUCT ID:", productId);
-    console.log("PARSED:", { artworkCode, sizeCode });
 
     if (!artworkCode || !sizeCode) {
       console.log("Skip line item due to unresolved artwork/size:", {
@@ -431,51 +422,43 @@ async function processOrderWebhook(order) {
     };
 
     try {
-      console.log("BEFORE IMAGE SYNC:", publicId);
       const syncedImage = await syncProductFeaturedImageToGitHub(productId);
-
-      if (syncedImage?.filePath) {
-        imageResult = syncedImage;
-      }
-
-      console.log("IMAGE SYNC RESULT:", imageResult);
+      if (syncedImage?.filePath) imageResult = syncedImage;
     } catch (error) {
       console.error("Image sync failed:", error);
-      console.log("FALLBACK IMAGE PATH:", imageResult.filePath);
     }
 
     const ownerToken = crypto.randomBytes(6).toString("hex");
+
     const record = {
-  verified: "Artwork Verified",
-  title,
-  archiveId: publicId,
-  internalId,
-  edition: `${pad2(editionNumber)} / ${editionTotal}`,
-  editionNumber,
-  editionTotal,
-  artist: "GLAMOPH",
-  medium: "Archival pigment print on fine art paper",
-  size: resolveSizeLabel(sizeCode),
-
-  // ▼ここ追加（重要）
-  frame: frameCode === "BLK" ? "Black" : "White",
-
-  archiveDate: formatArchiveDate(createdAt),
-  archiveUrl: `${VERIFY_PUBLIC_BASE_URL}/${publicId}`,
-  image: `/${imageResult.filePath}`,
-  artworkCode,
-  sizeCode,
-  shopifyOrderId: orderId,
-  orderName,
-  lineItemId,
-  sku,
-  createdAt,
-  updatedAt: new Date().toISOString(),
-  ownerToken,
-};
+      verified: "Artwork Verified",
+      title,
+      archiveId: publicId,
+      internalId,
+      edition: `${pad2(editionNumber)} / ${editionTotal}`,
+      editionNumber,
+      editionTotal,
+      artist: "GLAMOPH",
+      medium: "Archival pigment print on fine art paper",
+      size: resolveSizeLabel(sizeCode),
+      frame: frameCode === "BLK" ? "Black" : "White",
+      archiveDate: formatArchiveDate(createdAt),
+      archiveUrl: `${VERIFY_PUBLIC_BASE_URL}/${publicId}`,
+      image: `/${imageResult.filePath}`,
+      artworkCode,
+      sizeCode,
+      shopifyOrderId: orderId,
+      orderName,
+      lineItemId,
+      sku,
+      createdAt,
+      updatedAt: new Date().toISOString(),
+      ownerToken,
+    };
 
     await createRecordFile(internalId, record);
     await updateRecordsLog(publicId, internalId);
+
     await updateIssuedIndex(lineItemId, {
       publicId,
       internalId,
