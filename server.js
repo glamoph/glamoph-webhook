@@ -155,6 +155,8 @@ function buildPageHtml(record, recordId, options = {}) {
   const safeSize = escapeHtml(record.size || "");
   const safeFrame = escapeHtml(record.frame || "");
   const safeArchiveDate = escapeHtml(record.archiveDate || "");
+  const collectorName = getCollectorName(record);
+  const safeCollectorName = escapeHtml(collectorName);
   const safeArchiveUrl = `${VERIFY_PUBLIC_BASE_URL}/${recordId}`;
 
   return `<!DOCTYPE html>
