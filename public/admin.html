@@ -884,6 +884,47 @@ title: document.getElementById('title'),
         return;
       }
 
+        function applyOrderDraftToForm(draft) {
+      if (!draft) return;
+
+      el.sku.value = draft.sku || '';
+      el.artworkCode.value = draft.artworkCode || '';
+      el.size.value = draft.size || 'L';
+      el.title.value = draft.title || '';
+      el.image.value = draft.image || '';
+      el.artist.value = draft.artist || 'GLAMOPH';
+      el.frame.value = draft.frame || 'Black';
+      el.medium.value = draft.medium || 'Archival pigment print on fine art paper';
+
+      renderPreview(buildPreviewDraft());
+    }
+
+    async function loadOrderDetail() {
+      const orderId = String(el.loadOrderId.value || '').trim();
+
+      if (!orderId) {
+        el.orderLoadStatus.textContent = 'Order ID is required.';
+        el.orderLoadStatus.className = 'status error';
+        return;
+      }
+
+      try {
+        el.orderLoadStatus.textContent = 'Loading order...';
+        el.orderLoadStatus.className = 'status';
+
+        const data = await fetchJson(`/admin/order-detail?orderId=${encodeURIComponent(orderId)}`);
+
+        applyOrderDraftToForm(data.draft);
+
+        el.orderLoadStatus.textContent = `Loaded ${data.order?.name || orderId} successfully.`;
+        el.orderLoadStatus.className = 'status success';
+        setStatus('');
+      } catch (error) {
+        el.orderLoadStatus.textContent = error.message;
+        el.orderLoadStatus.className = 'status error';
+      }
+    }
+      
       el.jsonOutput.textContent = JSON.stringify(result.record, null, 2);
       renderResultMeta(result);
     }
