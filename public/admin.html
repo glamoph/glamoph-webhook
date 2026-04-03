@@ -496,26 +496,31 @@
           <p class="panel-subtitle">Generate a public archive record and push <span class="mono">data.json</span> directly to GitHub Pages.</p>
 
           <form id="publishForm" class="field-grid" autocomplete="off">
-            <div class="field-row-3">
-              <div class="field">
-                <label for="artworkCode">Artwork Code</label>
-                <input id="artworkCode" name="artworkCode" type="text" placeholder="AMFW" required />
-              </div>
+            <div class="field">
+  <label for="artworkCode">Artwork Code</label>
+  <input id="artworkCode" name="artworkCode" type="text" placeholder="AMFW" required />
+</div>
 
-              <div class="field">
-                <label for="size">Size</label>
-                <select id="size" name="size" required>
-                  <option value="L">L</option>
-                  <option value="M">M</option>
-                  <option value="S">S</option>
-                </select>
-              </div>
+<div class="field">
+  <label for="sku">SKU</label>
+  <input id="sku" name="sku" type="text" placeholder="GLAMOPH-TNGOPN-S-BLK" />
+</div>
 
-              <div class="field">
-                <label for="editionNumber">Edition</label>
-                <input id="editionNumber" name="editionNumber" type="number" min="1" step="1" placeholder="Auto" />
-              </div>
-            </div>
+<div class="field-row-2">
+  <div class="field">
+    <label for="size">Size</label>
+    <select id="size" name="size" required>
+      <option value="L">L</option>
+      <option value="M">M</option>
+      <option value="S">S</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label for="editionNumber">Edition</label>
+    <input id="editionNumber" name="editionNumber" type="number" min="1" step="1" placeholder="Auto" />
+  </div>
+</div>
 
             <div class="field">
               <label for="title">Title</label>
