@@ -747,7 +747,13 @@ title: document.getElementById('title'),
       const raw = String(value || '').trim().toUpperCase();
       return ['S', 'M', 'L'].includes(raw) ? raw : 'L';
     }
-
+    
+    function extractArtworkCodeFromSku(sku) {
+  if (!sku) return '';
+  const parts = sku.split('-');
+  return parts[1] || '';
+}
+    
     function pad3(value) {
       return String(value).padStart(3, '0');
     }
