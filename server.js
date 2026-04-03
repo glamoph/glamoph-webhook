@@ -31,15 +31,16 @@ app.get("/", (req, res) => {
 app.post('/api/publish', express.json(), async (req, res) => {
   try {
     const {
-      artworkCode,
-      size,
-      title,
-      image,
-      artist,
-      frame,
-      medium,
-      editionNumber
-    } = req.body;
+  artworkCode,
+  sku,
+  size,
+  title,
+  image,
+  artist,
+  frame,
+  medium,
+  editionNumber
+} = req.body;
 
     if (!artworkCode || !size || !title) {
       return res.status(400).json({
