@@ -8,8 +8,6 @@ const { Resend } = require("resend");
 const { verifyShopifyWebhook } = require("./lib/webhook-verify");
 const { readJsonFile, writeJsonFile } = require("./lib/github-contents");
 const { syncProductFeaturedImageToGitHub } = require("./lib/image-sync");
-const express = require('express');
-const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -83,8 +81,6 @@ app.post('/api/publish', express.json(), async (req, res) => {
         commitSha: "mock"
       }
     });
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
 
   } catch (err) {
     return res.status(500).json({
@@ -93,9 +89,6 @@ app.use(express.json());
     });
   }
 });
-// =============================
-// ENV
-// =============================
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -186,28 +179,16 @@ function getCollectorName(record) {
   const fullName = `${firstName} ${lastName}`.trim();
 
   if (fullName) return fullName;
-const SHOPIFY_STORE_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
-const SHOPIFY_ADMIN_ACCESS_TOKEN = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
-const VERIFY_PUBLIC_BASE_URL =
-  process.env.VERIFY_PUBLIC_BASE_URL || "https://verify.glamoph.com";
 
   return "";
 }
-// =============================
-// Helpers
-// =============================
 
 function buildPublicId({ artworkCode, sizeCode, editionNumber }) {
   return `GLA-${artworkCode}-${sizeCode}-${pad3(editionNumber)}`;
-function normalizeOrderId(value) {
-  return String(value || '').trim().replace(/^#/, '');
 }
 
 function buildInternalId(publicId) {
   return `${publicId}-${randomSuffix(8)}`;
-function extractArtworkCodeFromSku(sku) {
-  if (!sku) return '';
-  return sku.split('-')[1] || '';
 }
 
 function resolveRecordImageUrl(value) {
@@ -221,15 +202,10 @@ function resolveRecordImageUrl(value) {
   }
 
   return `${ARCHIVE_ASSET_BASE_URL}/${raw}`;
-function extractSizeFromSku(sku) {
-  if (!sku) return '';
-  return sku.split('-')[2] || '';
 }
 
 function buildPageHtml(record, recordId, options = {}) {
   const { isOwner } = options;
-async function shopifyFetch(pathname) {
-  const url = `https://${SHOPIFY_STORE_DOMAIN}/admin/api/2025-01${pathname}`;
 
   const imageUrl = resolveRecordImageUrl(record.image || "");
   const safeTitle = escapeHtml(record.title || "Untitled");
@@ -269,12 +245,7 @@ async function shopifyFetch(pathname) {
 
     .archive-collector-label {
       opacity: 0.72;
-  const res = await fetch(url, {
-    headers: {
-      'X-Shopify-Access-Token': SHOPIFY_ADMIN_ACCESS_TOKEN,
-      'Content-Type': 'application/json'
     }
-  });
 
     .archive-collector-name {
       color: #141414;
@@ -463,8 +434,6 @@ function buildCollectorEmailHtml(record) {
            </td>
          </tr>`
       : ""
-  if (!res.ok) {
-    throw new Error('Shopify API error');
   }
 
   <!-- CTA前テキスト（翻訳OK） -->
@@ -498,7 +467,6 @@ function buildCollectorEmailHtml(record) {
 
 </body>
 </html>`;
-  return res.json();
 }
 
 function buildCollectorEmailText(record) {
@@ -507,8 +475,6 @@ function buildCollectorEmailText(record) {
   const publicId = record.archiveId || "";
   const edition = record.edition || "";
   const collectorName = getCollectorName(record);
-async function findOrder(orderId) {
-  const id = normalizeOrderId(orderId);
 
   return [
     "GLAMOPH",
@@ -538,11 +504,6 @@ async function sendCollectorAccessEmail(record) {
   if (!resend || !resendFromEmail) {
     console.log("Skip collector email: RESEND not configured");
     return;
-  if (/^\d+$/.test(id)) {
-    try {
-      const data = await shopifyFetch(`/orders/${id}.json?status=any`);
-      if (data.order) return data.order;
-    } catch {}
   }
 
   const subject = `GLAMOPH — ${record.title || record.archiveId || "Artwork Record"}`;
@@ -556,15 +517,12 @@ async function sendCollectorAccessEmail(record) {
   });
 
   console.log("Collector email sent:", to, record.archiveId);
-  throw new Error('Order not found');
 }
 
 async function getNextEdition({ artworkCode, sizeCode }) {
   const file = await readJsonFile("records-source.json", {});
   const source = normalizeMap(file.data);
   const key = `${artworkCode}-${sizeCode}`;
-function buildDraft(order) {
-  const item = order.line_items[0];
 
   if (!source[key]) {
     source[key] = {
@@ -580,21 +538,10 @@ function buildDraft(order) {
     source,
     `Update edition counter: ${key}`
   );
-  const sku = item.sku;
-  const artworkCode = extractArtworkCodeFromSku(sku);
-  const size = extractSizeFromSku(sku);
 
   return {
     editionNumber: source[key].lastEditionNumber,
     editionTotal: source[key].editionTotal || resolveEditionTotal(sizeCode),
-    sku,
-    artworkCode,
-    size,
-    title: item.title,
-    image: `/images/${artworkCode}.jpg`,
-    artist: "GLAMOPH",
-    frame: "Black",
-    medium: "Archival pigment print on fine art paper"
   };
 }
 
@@ -613,9 +560,6 @@ async function updateIssuedIndex(lineItemId, payload) {
     `Update issued index: ${lineItemId}`
   );
 }
-// =============================
-// ORDER LOAD
-// =============================
 
 async function updateRecordsLog(publicId, internalId) {
   const file = await readJsonFile("records-log.json", {});
@@ -680,13 +624,8 @@ async function resendCollectorAccessByOrderId(orderId) {
     }
 
     await sendCollectorAccessEmail(record);
-app.get('/admin/order-detail', async (req, res) => {
-  try {
-    const order = await findOrder(req.query.orderId);
-    const draft = buildDraft(order);
 
     results.push({
-    res.json({
       ok: true,
       internalId,
       archiveId: record.archiveId || "",
@@ -914,7 +853,6 @@ app.post(
       } catch (error) {
         console.error("orders-paid processing error:", error);
       }
-      draft
     });
   }
 );
@@ -958,10 +896,6 @@ app.post(
       } catch (error) {
         console.error("orders-create processing error:", error);
       }
-  } catch (err) {
-    res.status(500).json({
-      ok: false,
-      error: err.message
     });
   }
 );
@@ -1092,42 +1026,24 @@ app.post(
 
 app.get("/:recordId", async (req, res) => {
   const publicId = String(req.params.recordId || "").trim().toUpperCase();
-});
 
   if (!publicId) {
     return res.status(400).send("Invalid Record ID");
   }
-// =============================
-// PUBLISH (mock)
-// =============================
 
   try {
     const logFile = await readJsonFile("records-log.json", {});
     const recordsLog = normalizeMap(logFile?.data);
     const internalId = String(recordsLog[publicId] || "").trim();
-app.post('/api/publish', (req, res) => {
-  const {
-    artworkCode,
-    size,
-    title,
-    editionNumber
-  } = req.body;
 
     if (!internalId) {
       return res.status(404).send("Record not found");
     }
-  const edition = Math.max(1, Number(editionNumber || 1));
 
     const file = await readJsonFile(`records/${internalId}/data.json`, null);
-  const artworkId = `GLA-${artworkCode}-${size}-${String(edition).padStart(3, '0')}`;
 
     if (!file?.data) {
       return res.status(404).send("Record not found");
-  res.json({
-    ok: true,
-    record: {
-      artworkId,
-      title
     }
 
     const record = file.data;
@@ -1141,13 +1057,8 @@ app.post('/api/publish', (req, res) => {
     console.error("VERIFY PAGE ERROR:", error);
     return res.status(500).send("Internal Server Error");
   }
-  });
 });
 
 app.listen(PORT, () => {
   console.log(`GLAMOPH verify listening on :${PORT}`);
-// =============================
-
-app.listen(3000, () => {
-  console.log('Server running');
 });
