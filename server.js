@@ -381,17 +381,12 @@ function resolveEmailLocale(record) {
 
 function buildCollectorEmailSubject(record) {
   const locale = resolveEmailLocale(record);
-  const title = String(record?.title || "").trim();
 
   if (locale === "ja") {
-  return title
-    ? `[GLAMOPH] 証明書が発行されました – ${title}`
-    : `[GLAMOPH] 証明書が発行されました`;
-}
+    return `[GLAMOPH] 証明書が発行されました`;
+  }
 
-  return title
-    ? `Your GLAMOPH Certificate is Ready – ${title}`
-    : `Your GLAMOPH Certificate is Ready`;
+  return `Your GLAMOPH Certificate is Ready`;
 }
 
 function buildCollectorEmailHtml(record) {
