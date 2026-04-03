@@ -416,24 +416,25 @@ function buildCollectorEmailText(record) {
   const ownerUrl = record.ownerArchiveUrl || "";
   const publicId = record.archiveId || "";
   const edition = record.edition || "";
+  const collectorName = getCollectorName(record);
 
   return [
-    "GLAMOPH Collector Access",
+    "GLAMOPH",
     "",
     title,
     "",
-    "Your collector record is now available.",
-    "Enter your private access view to claim this edition.",
+    "This work has been recorded.",
+    "Your collector access is now ready.",
     "",
+    ...(collectorName ? [`Recorded for: ${collectorName}`, ""] : []),
     `Artwork ID: ${publicId}`,
     `Edition: ${edition}`,
     "",
     ownerUrl,
     "",
-    "This access link is intended for the collector’s private record view.",
+    "This link provides access to your private collector record."
   ].join("\n");
 }
-
 async function sendCollectorAccessEmail(record) {
   const to = String(record.customerEmail || "").trim();
 
