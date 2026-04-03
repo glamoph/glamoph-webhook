@@ -580,24 +580,6 @@ function buildCollectorEmailText(record) {
     "",
     title,
     "",
-    "This artwork has been officially archived.",
-    "Collector access has been granted.",
-    "",
-    `Artwork ID: ${publicId}`,
-    `Edition: ${edition}`,
-    "",
-    "Access your private collector record below.",
-    ownerUrl,
-    "",
-    "GLAMOPH",
-  ].join("\n");
-}
-
-  return [
-    "GLAMOPH",
-    "",
-    title,
-    "",
     collectorName ? `Hello ${collectorName},` : "Hello,",
     "",
     "This artwork has been officially archived.",
