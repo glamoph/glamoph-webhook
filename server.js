@@ -514,7 +514,6 @@ function buildCollectorEmailText(record) {
   const locale = resolveEmailLocale(record);
   const isJa = locale === "ja";
 
-  const title = record.title || "Untitled";
   const ownerUrl = record.ownerArchiveUrl || "";
   const publicId = record.archiveId || "";
   const edition = record.edition || "";
@@ -522,8 +521,6 @@ function buildCollectorEmailText(record) {
   if (isJa) {
     return [
       "GLAMOPH",
-      "",
-      title,
       "",
       "この作品はアーカイブされました。",
       "コレクターアクセスが付与されました。",
@@ -533,27 +530,21 @@ function buildCollectorEmailText(record) {
       "",
       "あなたのコレクターレコードはこちらからご確認いただけます。",
       ownerUrl,
-      "",
-      "GLAMOPH",
     ].join("\n");
   }
 
   return [
-  "GLAMOPH",
-  "",
-  title,
-  "",
-  "This artwork has been officially archived.",
-  "Collector access has been granted.",
-  "",
-  `Artwork ID: ${publicId}`,
-  `Edition: ${edition}`,
-  "",
-  "Access your private collector record below.",
-  ownerUrl,
-  "",
-  "GLAMOPH",
-].join("\n");
+    "GLAMOPH",
+    "",
+    "This artwork has been officially archived.",
+    "Collector access has been granted.",
+    "",
+    `Artwork ID: ${publicId}`,
+    `Edition: ${edition}`,
+    "",
+    "Access your private collector record below.",
+    ownerUrl,
+  ].join("\n");
 }
 
 async function sendCollectorAccessEmail(record) {
