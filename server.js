@@ -3,6 +3,7 @@ console.log("🚀 GLAMOPH VERIFY (DIRECT RENDER + WEBHOOK)");
 const express = require("express");
 const crypto = require("crypto");
 const path = require("path");
+const { Resend } = require("resend");
 
 const { verifyShopifyWebhook } = require("./lib/webhook-verify");
 const { readJsonFile, writeJsonFile } = require("./lib/github-contents");
@@ -18,6 +19,10 @@ const VERIFY_PUBLIC_BASE_URL =
 
 const ARCHIVE_ASSET_BASE_URL =
   (process.env.ARCHIVE_ASSET_BASE_URL || "https://glamoph.github.io/glamoph-archive").replace(/\/+$/, "");
+
+const resendApiKey = String(process.env.RESEND_API_KEY || "").trim();
+const resendFromEmail = String(process.env.RESEND_FROM_EMAIL || "").trim();
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 app.get("/", (req, res) => {
   res.send("GLAMOPH Verify System");
@@ -131,14 +136,10 @@ function buildPageHtml(record, recordId, options = {}) {
   const { isOwner } = options;
 
   const imageUrl = resolveRecordImageUrl(record.image || "");
-const safeTitle = escapeHtml(record.title || "Untitled");
-const safeVerified = escapeHtml(record.verified || "Artwork Verified");
-const safeArtworkId = escapeHtml(record.archiveId || recordId);
-const safeEdition = escapeHtml(record.edition || "");
-const formattedEdition =
-  record.editionNumber && record.editionTotal
-    ? `${record.editionNumber} / ${record.editionTotal}`
-    : safeEdition;
+  const safeTitle = escapeHtml(record.title || "Untitled");
+  const safeVerified = escapeHtml(record.verified || "Artwork Verified");
+  const safeArtworkId = escapeHtml(record.archiveId || recordId);
+  const safeEdition = escapeHtml(record.edition || "");
   const safeArtist = escapeHtml(record.artist || "GLAMOPH");
   const safeMedium = escapeHtml(record.medium || "");
   const safeSize = escapeHtml(record.size || "");
@@ -162,23 +163,21 @@ const formattedEdition =
     <section class="archive-shell">
 
       <header class="archive-header">
-  <div class="archive-status-line">
-    <span class="archive-status">${safeVerified}</span>
-    ${isOwner ? `<span class="archive-status-divider">/</span><span class="archive-owner">Authenticated Holder</span>` : ""}
-  </div>
-</header>
+        <div class="archive-status-line">
+          <span class="archive-status">${safeVerified}</span>
+          ${isOwner ? `<span class="archive-status-divider">/</span><span class="archive-owner">Authenticated Holder</span>` : ""}
+        </div>
+      </header>
 
       <section class="archive-hero">
         <div class="archive-hero__content">
           <h1 class="archive-title">${safeTitle}</h1>
 
           <div class="archive-meta-line">
-  <span class="archive-meta-id">${safeArtworkId}</span>
-  <span class="archive-meta-divider">/</span>
-  <span class="archive-meta-edition" title="Edition number">
-  ${safeEdition}
-</span>
-</div>
+            <span class="archive-meta-id">${safeArtworkId}</span>
+            <span class="archive-meta-divider">/</span>
+            <span class="archive-meta-edition" title="Edition number">${safeEdition}</span>
+          </div>
         </div>
 
         <figure class="archive-artwork">
@@ -229,7 +228,7 @@ const formattedEdition =
 
             <div class="archive-record__row archive-record__row--url">
               <dt>Archive URL</dt>
-              <dd><a href="${safeArchiveUrl}" target="_blank">${safeArchiveUrl}</a></dd>
+              <dd><a href="${safeArchiveUrl}" target="_blank" rel="noopener noreferrer">${safeArchiveUrl}</a></dd>
             </div>
           </dl>
         </div>
@@ -247,6 +246,146 @@ const formattedEdition =
   </main>
 </body>
 </html>`;
+}
+
+function buildCollectorEmailHtml(record) {
+  const title = escapeHtml(record.title || "Untitled");
+  const ownerUrl = escapeHtml(record.ownerArchiveUrl || "");
+  const publicId = escapeHtml(record.archiveId || "");
+  const edition = escapeHtml(record.edition || "");
+  const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Collector Access</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f1ea;color:#141414;font-family:Montserrat,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#f4f1ea;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;max-width:640px;background:#f4f1ea;">
+          <tr>
+            <td style="padding:0 0 18px;">
+              <div style="font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#6b665f;">
+                GLAMOPH Collector Access
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 0 18px;">
+              <div style="font-family:'Cormorant Garamond', Georgia, serif;font-size:48px;line-height:0.96;font-weight:300;color:#141414;">
+                ${title}
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 0 22px;">
+              <div style="font-size:12px;line-height:1.8;color:#6b665f;max-width:36ch;">
+                Your collector record is now available. Enter your private access view to claim this edition.
+              </div>
+            </td>
+          </tr>
+
+          ${
+            imageUrl
+              ? `<tr>
+                  <td style="padding:0 0 24px;">
+                    <img src="${imageUrl}" alt="${title}" style="display:block;width:100%;height:auto;border:0;" />
+                  </td>
+                </tr>`
+              : ""
+          }
+
+          <tr>
+            <td style="padding:0 0 16px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                <tr>
+                  <td align="center" style="background:#141414;">
+                    <a href="${ownerUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:14px 22px;color:#f4f1ea;text-decoration:none;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;">
+                      Enter Collector View
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 0 28px;">
+              <div style="font-size:10px;line-height:1.7;letter-spacing:0.08em;text-transform:uppercase;color:#6b665f;">
+                Artwork ID: ${publicId}<br />
+                Edition: ${edition}
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding-top:22px;border-top:1px solid rgba(20,20,20,0.12);">
+              <div style="font-size:11px;line-height:1.8;color:#6b665f;max-width:42ch;">
+                This access link is intended for the collector’s private record view.
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+function buildCollectorEmailText(record) {
+  const title = record.title || "Untitled";
+  const ownerUrl = record.ownerArchiveUrl || "";
+  const publicId = record.archiveId || "";
+  const edition = record.edition || "";
+
+  return [
+    "GLAMOPH Collector Access",
+    "",
+    title,
+    "",
+    "Your collector record is now available.",
+    "Enter your private access view to claim this edition.",
+    "",
+    `Artwork ID: ${publicId}`,
+    `Edition: ${edition}`,
+    "",
+    ownerUrl,
+    "",
+    "This access link is intended for the collector’s private record view.",
+  ].join("\n");
+}
+
+async function sendCollectorAccessEmail(record) {
+  const to = String(record.customerEmail || "").trim();
+
+  if (!to) {
+    console.log("Skip collector email: no customer email");
+    return;
+  }
+
+  if (!resend || !resendFromEmail) {
+    console.log("Skip collector email: RESEND not configured");
+    return;
+  }
+
+  const subject = `GLAMOPH Collector Access — ${record.title || record.archiveId || "Artwork Record"}`;
+
+  await resend.emails.send({
+    from: resendFromEmail,
+    to,
+    subject,
+    html: buildCollectorEmailHtml(record),
+    text: buildCollectorEmailText(record),
+  });
+
+  console.log("Collector email sent:", to, record.archiveId);
 }
 
 async function getNextEdition({ artworkCode, sizeCode }) {
@@ -329,6 +468,9 @@ async function processOrderWebhook(order) {
   const orderId = order?.id;
   const orderName = order?.name || "";
   const createdAt = order?.created_at || new Date().toISOString();
+  const customerEmail = String(order?.email || order?.contact_email || "").trim();
+  const customerFirstName = String(order?.customer?.first_name || "").trim();
+  const customerLastName = String(order?.customer?.last_name || "").trim();
   const lineItems = Array.isArray(order?.line_items) ? order.line_items : [];
 
   console.log("ORDER ID:", orderId);
@@ -392,8 +534,8 @@ async function processOrderWebhook(order) {
     }
 
     if (!artworkCode) {
-  console.log("No artworkCode resolved from SKU/title");
-}
+      console.log("No artworkCode resolved from SKU/title");
+    }
 
     if (!sizeCode) {
       if (/\bS\b/.test(variantTitle)) sizeCode = "S";
@@ -442,6 +584,8 @@ async function processOrderWebhook(order) {
     }
 
     const ownerToken = crypto.randomBytes(6).toString("hex");
+    const publicArchiveUrl = `${VERIFY_PUBLIC_BASE_URL}/${publicId}`;
+    const ownerArchiveUrl = `${VERIFY_PUBLIC_BASE_URL}/${publicId}?t=${ownerToken}`;
 
     const record = {
       verified: "Artwork Verified",
@@ -456,7 +600,8 @@ async function processOrderWebhook(order) {
       size: resolveSizeLabel(sizeCode),
       frame: frameCode === "BLK" ? "Black" : "White",
       archiveDate: formatArchiveDate(createdAt),
-      archiveUrl: `${VERIFY_PUBLIC_BASE_URL}/${publicId}`,
+      archiveUrl: publicArchiveUrl,
+      ownerArchiveUrl,
       image: `/${imageResult.filePath}`,
       artworkCode,
       sizeCode,
@@ -467,6 +612,9 @@ async function processOrderWebhook(order) {
       createdAt,
       updatedAt: new Date().toISOString(),
       ownerToken,
+      customerEmail,
+      customerFirstName,
+      customerLastName,
     };
 
     await createRecordFile(internalId, record);
@@ -480,6 +628,8 @@ async function processOrderWebhook(order) {
       sku,
       createdAt,
     });
+
+    await sendCollectorAccessEmail(record);
 
     console.log("Issued:", publicId, "=>", internalId);
   }
@@ -683,11 +833,9 @@ app.get("/:recordId", async (req, res) => {
     }
 
     const record = file.data;
-
-const token = String(req.query.t || "");
-const isOwner = token && record.ownerToken && token === record.ownerToken;
-
-const html = buildPageHtml(record, publicId, { isOwner });
+    const token = String(req.query.t || "").trim();
+    const isOwner = Boolean(token && record.ownerToken && token === record.ownerToken);
+    const html = buildPageHtml(record, publicId, { isOwner });
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     return res.status(200).send(html);
