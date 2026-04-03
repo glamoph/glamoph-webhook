@@ -765,29 +765,29 @@ title: document.getElementById('title'),
     }
 
     function buildPreviewDraft() {
-      const artworkCode = normalizeArtworkCode(el.artworkCode.value);
-      const size = normalizeSize(el.size.value);
-      const editionNumber = Number(el.editionNumber.value || 1);
-      const title = el.title.value.trim() || 'Untitled';
-      const sku = el.sku.value.trim();
-const image = el.image.value.trim() || (sku ? `/images/${sku}.jpg` : (artworkCode ? `/images/${artworkCode}.jpg` : ''));
-      const sizeMeta = SIZE_MAP[size] || SIZE_MAP.L;
-      const artworkId = artworkCode ? createSlug(artworkCode, size, editionNumber) : 'GLA-XXXX-X-000';
-      const archiveUrl = artworkCode ? `${archiveBaseUrl()}/${artworkId}` : '—';
+  const artworkCode = normalizeArtworkCode(el.artworkCode.value);
+  const sku = el.sku.value.trim();
+  const size = normalizeSize(el.size.value);
+  const editionNumber = Number(el.editionNumber.value || 1);
+  const title = el.title.value.trim() || 'Untitled';
+  const image = el.image.value.trim() || (sku ? `/images/${sku}.jpg` : (artworkCode ? `/images/${artworkCode}.jpg` : ''));
+  const sizeMeta = SIZE_MAP[size] || SIZE_MAP.L;
+  const artworkId = artworkCode ? createSlug(artworkCode, size, editionNumber) : 'GLA-XXXX-X-000';
+  const archiveUrl = artworkCode ? `${archiveBaseUrl()}/${artworkId}` : '—';
 
-      return {
-        verified: 'Artwork Verified',
-        title,
-        artworkId,
-        edition: `Edition ${pad2(editionNumber)} / ${sizeMeta.total}`,
-        artist: el.artist.value.trim() || 'GLAMOPH',
-        frame: el.frame.value.trim() || 'Black',
-        size: sizeMeta.label,
-        medium: el.medium.value.trim() || 'Archival pigment print on fine art paper',
-        archiveUrl,
-        image
-      };
-    }
+  return {
+    verified: 'Artwork Verified',
+    title,
+    artworkId,
+    edition: `Edition ${pad2(editionNumber)} / ${sizeMeta.total}`,
+    artist: el.artist.value.trim() || 'GLAMOPH',
+    frame: el.frame.value.trim() || 'Black',
+    size: sizeMeta.label,
+    medium: el.medium.value.trim() || 'Archival pigment print on fine art paper',
+    archiveUrl,
+    image
+  };
+}
 
     function renderPreview(data) {
       el.previewVerified.textContent = data.verified || 'Artwork Verified';
