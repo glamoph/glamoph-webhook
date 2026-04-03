@@ -438,43 +438,6 @@
       flex-wrap: wrap;
     }
 
-    .table-wrap {
-      overflow: auto;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: rgba(255,255,255,0.7);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 760px;
-    }
-
-    th, td {
-      text-align: left;
-      vertical-align: top;
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--line);
-      font-size: 13px;
-      line-height: 1.55;
-    }
-
-    th {
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      background: rgba(255,255,255,0.7);
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-
-    tr:last-child td {
-      border-bottom: 0;
-    }
-
     .small {
       font-size: 12px;
       color: var(--muted);
@@ -538,11 +501,97 @@
         <div class="brand-kicker">GLAMOPH Archive</div>
         <div class="brand-title">Certificate Studio</div>
       </div>
-      <div class="meta-chip" id="configChip">Connecting…</div>
+      <div class="meta-chip" id="configChip">Ready</div>
     </header>
 
     <div class="layout">
-    
+      <section class="panel">
+        <div class="panel-inner">
+          <h2 class="panel-title">Publish Certificate</h2>
+          <p class="panel-subtitle">Generate a public archive record and push <span class="mono">data.json</span> directly to GitHub Pages.</p>
+
+          <form id="publishForm" class="field-grid" autocomplete="off">
+            <div class="field-row-3">
+              <div class="field">
+                <label for="artworkCode">Artwork Code</label>
+                <input id="artworkCode" name="artworkCode" type="text" placeholder="AMFW" required />
+              </div>
+
+              <div class="field">
+                <label for="size">Size</label>
+                <select id="size" name="size" required>
+                  <option value="L">L</option>
+                  <option value="M">M</option>
+                  <option value="S">S</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="editionNumber">Edition</label>
+                <input id="editionNumber" name="editionNumber" type="number" min="1" step="1" placeholder="Auto" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="title">Title</label>
+              <input id="title" name="title" type="text" placeholder="A Mind Full of Water" required />
+            </div>
+
+            <div class="field">
+              <label for="image">Image Path</label>
+              <input id="image" name="image" type="text" placeholder="/images/AMFW.jpg" />
+              <div class="hint">Leave blank to use <span class="mono">/images/{artworkCode}.jpg</span>.</div>
+            </div>
+
+            <div class="field-row-2">
+              <div class="field">
+                <label for="artist">Artist</label>
+                <input id="artist" name="artist" type="text" placeholder="GLAMOPH" />
+              </div>
+
+              <div class="field">
+                <label for="frame">Frame</label>
+                <input id="frame" name="frame" type="text" placeholder="Black" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="medium">Medium</label>
+              <textarea id="medium" name="medium" placeholder="Archival pigment print on fine art paper"></textarea>
+            </div>
+
+            <hr style="margin:24px 0;border:none;border-top:1px solid rgba(19,19,19,0.1);" />
+
+            <div class="field-row-2">
+              <div class="field">
+                <label for="resendOrderId">Order ID</label>
+                <input id="resendOrderId" type="text" placeholder="6102850404436" />
+              </div>
+
+              <div class="field">
+                <label for="resendAdminToken">Admin Token</label>
+                <input id="resendAdminToken" type="password" placeholder="ADMIN_REISSUE_TOKEN" />
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="button" type="button" id="resendCollectorAccessBtn">
+                Resend Collector Access
+              </button>
+            </div>
+
+            <div class="status" id="resendStatus"></div>
+
+            <div class="actions">
+              <button class="button button-primary" type="submit" id="publishBtn">
+                Issue Certificate
+              </button>
+            </div>
+
+            <div class="status" id="status"></div>
+          </form>
+        </div>
+      </section>
 
       <div class="stack">
         <section class="panel">
@@ -631,41 +680,6 @@
             </div>
           </div>
         </section>
-
-        <section class="panel">
-          <div class="panel-inner">
-            <div class="toolbar">
-              <div>
-                <h2 class="panel-title" style="margin-bottom:4px;">Published Records Log</h2>
-                <div class="small">Records pulled from <span class="mono">records-log.json</span>.</div>
-              </div>
-              <div class="toolbar-right">
-                <button class="button" type="button" id="reloadTableBtn">Reload Table</button>
-              </div>
-            </div>
-
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Artwork ID</th>
-                    <th>Title</th>
-                    <th>Code</th>
-                    <th>Size</th>
-                    <th>Edition</th>
-                    <th>Archive URL</th>
-                    <th>Created</th>
-                  </tr>
-                </thead>
-                <tbody id="recordsTableBody">
-                  <tr>
-                    <td colspan="7" class="small">Loading…</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
       </div>
     </div>
   </div>
@@ -678,8 +692,6 @@
     };
 
     const state = {
-      config: null,
-      artworks: [],
       latestResult: null,
       lastArchiveUrl: ''
     };
@@ -689,9 +701,6 @@
       status: document.getElementById('status'),
       publishForm: document.getElementById('publishForm'),
       publishBtn: document.getElementById('publishBtn'),
-      loadArtworksBtn: document.getElementById('loadArtworksBtn'),
-      refreshLogBtn: document.getElementById('refreshLogBtn'),
-      reloadTableBtn: document.getElementById('reloadTableBtn'),
       copyJsonBtn: document.getElementById('copyJsonBtn'),
       openArchiveBtn: document.getElementById('openArchiveBtn'),
 
@@ -718,7 +727,11 @@
 
       jsonOutput: document.getElementById('jsonOutput'),
       resultMeta: document.getElementById('resultMeta'),
-      recordsTableBody: document.getElementById('recordsTableBody')
+
+      resendBtn: document.getElementById('resendCollectorAccessBtn'),
+      resendOrderId: document.getElementById('resendOrderId'),
+      resendAdminToken: document.getElementById('resendAdminToken'),
+      resendStatus: document.getElementById('resendStatus')
     };
 
     function setStatus(message, type = '') {
@@ -757,10 +770,7 @@
     }
 
     function archiveBaseUrl() {
-      if (state.config && state.config.archiveBaseUrl) {
-        return String(state.config.archiveBaseUrl).replace(/\/+$/, '');
-      }
-      return '';
+      return 'https://verify.glamoph.com';
     }
 
     function buildPreviewDraft() {
@@ -816,9 +826,6 @@
 
     function setBusy(isBusy) {
       el.publishBtn.disabled = isBusy;
-      el.loadArtworksBtn.disabled = isBusy;
-      el.refreshLogBtn.disabled = isBusy;
-      el.reloadTableBtn.disabled = isBusy;
     }
 
     async function fetchJson(url, options) {
@@ -828,59 +835,6 @@
         throw new Error(data.error || `Request failed: ${response.status}`);
       }
       return data;
-    }
-
-    function fillFromArtworkMeta(code) {
-      if (!code || !Array.isArray(state.artworks) || !state.artworks.length) return;
-
-      const found = state.artworks.find((item) => {
-        const values = [item.artworkCode, item.code, item.slug, item.id]
-          .filter(Boolean)
-          .map(normalizeArtworkCode);
-        return values.includes(code);
-      });
-
-      if (!found) return;
-
-      if (!el.title.value.trim() && (found.title || found.artworkTitle)) {
-        el.title.value = found.title || found.artworkTitle || '';
-      }
-
-      if (!el.image.value.trim() && (found.image || found.imagePath || found.imageUrl)) {
-        el.image.value = found.image || found.imagePath || found.imageUrl || '';
-      }
-
-      if (!el.artist.value.trim() && found.artist) {
-        el.artist.value = found.artist;
-      }
-
-      if (!el.frame.value.trim() && found.frame) {
-        el.frame.value = found.frame;
-      }
-
-      if (!el.medium.value.trim() && found.medium) {
-        el.medium.value = found.medium;
-      }
-    }
-
-    async function loadConfig() {
-      const data = await fetchJson('/api/config');
-      state.config = data;
-      el.configChip.textContent = `${data.githubOwner}/${data.githubRepo} · ${data.githubBranch}`;
-      renderPreview(buildPreviewDraft());
-    }
-
-    async function loadArtworks() {
-      setStatus('Loading artworks…');
-      const data = await fetchJson('/api/artworks');
-      state.artworks = Array.isArray(data.items) ? data.items : [];
-      setStatus(`Loaded ${state.artworks.length} artwork item${state.artworks.length === 1 ? '' : 's'}.`, 'success');
-
-      const code = normalizeArtworkCode(el.artworkCode.value);
-      if (code) {
-        fillFromArtworkMeta(code);
-        renderPreview(buildPreviewDraft());
-      }
     }
 
     function renderResultMeta(result) {
@@ -913,40 +867,6 @@
 
       el.jsonOutput.textContent = JSON.stringify(result.record, null, 2);
       renderResultMeta(result);
-    }
-
-    function renderRecordsTable(items) {
-      if (!Array.isArray(items) || !items.length) {
-        el.recordsTableBody.innerHTML = `
-          <tr>
-            <td colspan="7" class="small">No records found.</td>
-          </tr>
-        `;
-        return;
-      }
-
-      el.recordsTableBody.innerHTML = items.map((item) => {
-        const archiveLink = item.archiveUrl
-          ? `<a href="${escapeHtml(item.archiveUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.archiveUrl)}</a>`
-          : '—';
-
-        return `
-          <tr>
-            <td class="mono">${escapeHtml(item.artworkId || '—')}</td>
-            <td>${escapeHtml(item.title || '—')}</td>
-            <td>${escapeHtml(item.artworkCode || '—')}</td>
-            <td>${escapeHtml(item.sizeCode || item.size || '—')}</td>
-            <td>${escapeHtml(item.editionNumber ? String(item.editionNumber) : '—')}</td>
-            <td>${archiveLink}</td>
-            <td>${escapeHtml(item.createdAt || '—')}</td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    async function loadRecordsLog() {
-      const data = await fetchJson('/api/records-log');
-      renderRecordsTable(data.items || []);
     }
 
     function collectPayload() {
@@ -1005,7 +925,6 @@
         state.lastArchiveUrl = result.record && result.record.archiveUrl ? result.record.archiveUrl : '';
         renderJsonOutput(result);
         renderPreview(result.record || buildPreviewDraft());
-        await loadRecordsLog();
 
         setStatus(`Published ${result.record.artworkId} successfully.`, 'success');
       } catch (error) {
@@ -1028,18 +947,11 @@
     }
 
     function onFieldInput() {
-      const code = normalizeArtworkCode(el.artworkCode.value);
-      if (code) {
-        fillFromArtworkMeta(code);
-      }
       renderPreview(buildPreviewDraft());
     }
 
     function bindEvents() {
       el.publishForm.addEventListener('submit', publishRecord);
-      el.loadArtworksBtn.addEventListener('click', loadArtworks);
-      el.refreshLogBtn.addEventListener('click', loadRecordsLog);
-      el.reloadTableBtn.addEventListener('click', loadRecordsLog);
       el.copyJsonBtn.addEventListener('click', copyJson);
       el.openArchiveBtn.addEventListener('click', openArchive);
 
@@ -1056,89 +968,62 @@
         node.addEventListener('input', onFieldInput);
         node.addEventListener('change', onFieldInput);
       });
-		
-	const resendBtn = document.getElementById("resendCollectorAccessBtn");
-const resendOrderId = document.getElementById("resendOrderId");
-const resendAdminToken = document.getElementById("resendAdminToken");
-const resendStatus = document.getElementById("resendStatus");
 
-if (resendBtn) {
-  resendBtn.addEventListener("click", async () => {
-    const orderId = String(resendOrderId.value || "").trim();
-    const token = String(resendAdminToken.value || "").trim();
+      if (el.resendBtn) {
+        el.resendBtn.addEventListener('click', async () => {
+          const orderId = String(el.resendOrderId.value || '').trim();
+          const token = String(el.resendAdminToken.value || '').trim();
 
-    if (!orderId) {
-      resendStatus.textContent = "Missing orderId";
-      resendStatus.className = "status error";
-      return;
-    }
+          if (!orderId) {
+            el.resendStatus.textContent = 'Missing orderId';
+            el.resendStatus.className = 'status error';
+            return;
+          }
 
-    if (!token) {
-      resendStatus.textContent = "Missing admin token";
-      resendStatus.className = "status error";
-      return;
-    }
+          if (!token) {
+            el.resendStatus.textContent = 'Missing admin token';
+            el.resendStatus.className = 'status error';
+            return;
+          }
 
-    resendBtn.disabled = true;
-    resendStatus.textContent = "Sending...";
-    resendStatus.className = "status";
+          el.resendBtn.disabled = true;
+          el.resendStatus.textContent = 'Sending...';
+          el.resendStatus.className = 'status';
 
-    try {
-      const res = await fetch("https://verify.glamoph.com/admin/resend-collector-access", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-token": token
-        },
-        body: JSON.stringify({ orderId })
-      });
+          try {
+            const res = await fetch('https://verify.glamoph.com/admin/resend-collector-access', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-admin-token': token
+              },
+              body: JSON.stringify({ orderId })
+            });
 
-      const data = await res.json();
+            const data = await res.json();
 
-      if (data.ok) {
-        resendStatus.textContent = "Collector access sent successfully.";
-        resendStatus.className = "status success";
-      } else {
-        resendStatus.textContent = data.error || "Failed";
-        resendStatus.className = "status error";
+            if (data.ok) {
+              el.resendStatus.textContent = 'Collector access sent successfully.';
+              el.resendStatus.className = 'status success';
+            } else {
+              el.resendStatus.textContent = data.error || 'Failed';
+              el.resendStatus.className = 'status error';
+            }
+          } catch (err) {
+            el.resendStatus.textContent = err.message;
+            el.resendStatus.className = 'status error';
+          } finally {
+            el.resendBtn.disabled = false;
+          }
+        });
       }
-
-      console.log(data);
-    } catch (err) {
-      resendStatus.textContent = err.message;
-      resendStatus.className = "status error";
-    } finally {
-      resendBtn.disabled = false;
-    }
-  });
-}
-		
     }
 
-   async function init() {
-  bindEvents();
-  renderJsonOutput(null);
-  renderPreview(buildPreviewDraft());
-
-  // 一旦無効化（必要なら後で復活）
-  /*
-  try {
-    await loadArtworks();
-  } catch (error) {
-    setStatus(error.message, 'error');
-  }
-
-  try {
-    await loadRecordsLog();
-  } catch (error) {
-    el.recordsTableBody.innerHTML = `
-      <tr>
-        <td colspan="7" class="small">${escapeHtml(error.message)}</td>
-      </tr>
-    `;
-  }
-  */
-}
+    function init() {
+      bindEvents();
+      renderJsonOutput(null);
+      renderPreview(buildPreviewDraft());
+    }
 
     init();
   </script>
