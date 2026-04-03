@@ -362,7 +362,42 @@ function buildPageHtml(record, recordId, options = {}) {
 </html>`;
 }
 
+function resolveEmailLocale(record) {
+  const candidates = [
+    record?.locale,
+    record?.customerLocale,
+    record?.shippingCountryCode === "JP" ? "ja" : "",
+    record?.billingCountryCode === "JP" ? "ja" : "",
+  ]
+    .filter(Boolean)
+    .map((value) => String(value).trim().toLowerCase());
+
+  for (const value of candidates) {
+    if (value.startsWith("ja")) return "ja";
+  }
+
+  return "en";
+}
+
+function buildCollectorEmailSubject(record) {
+  const locale = resolveEmailLocale(record);
+  const title = String(record?.title || "").trim();
+
+  if (locale === "ja") {
+    return title
+      ? `GLAMOPH 証明書が発行されました – ${title}`
+      : `GLAMOPH 証明書が発行されました`;
+  }
+
+  return title
+    ? `Your GLAMOPH Certificate is Ready – ${title}`
+    : `Your GLAMOPH Certificate is Ready`;
+}
+
 function buildCollectorEmailHtml(record) {
+  const locale = resolveEmailLocale(record);
+  const isJa = locale === "ja";
+
   const title = escapeHtml(record.title || "Untitled");
   const ownerUrl = escapeHtml(record.ownerArchiveUrl || "");
   const publicId = escapeHtml(record.archiveId || "");
@@ -370,129 +405,179 @@ function buildCollectorEmailHtml(record) {
   const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
   const collectorName = escapeHtml(getCollectorName(record));
 
+  const greeting = collectorName
+    ? (isJa ? `${collectorName} 様` : `Hello ${collectorName},`)
+    : (isJa ? `こんにちは。` : `Hello,`);
+
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${isJa ? "ja" : "en"}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="google" content="notranslate" />
-  <title>GLAMOPH</title>
+  <title>${escapeHtml(buildCollectorEmailSubject(record))}</title>
 </head>
+<body style="margin:0;padding:0;background:#f4f1ea;color:#141414;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:auto;padding:40px 20px;">
+    <tr>
+      <td translate="no" style="font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#6b665f;padding-bottom:18px;">
+        GLAMOPH
+      </td>
+    </tr>
 
-<body style="margin:0;padding:0;background:#f4f1ea;color:#141414;font-family:Montserrat,Arial,sans-serif;">
+    <tr>
+      <td style="padding-bottom:18px;">
+        <div translate="no" style="font-family:'Cormorant Garamond', Georgia, serif;font-size:48px;line-height:0.96;font-weight:300;color:#141414;">
+          <span translate="no">${title}</span>
+        </div>
+      </td>
+    </tr>
 
-<table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:auto;padding:40px 20px;">
+    <tr>
+      <td style="padding-bottom:22px;">
+        <div style="font-size:15px;line-height:1.8;color:#141414;">
+          ${greeting}
+        </div>
+      </td>
+    </tr>
 
-  <!-- ブランド -->
-  <tr>
-    <td translate="no" style="font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#6b665f;padding-bottom:18px;">
-      GLAMOPH
-    </td>
-  </tr>
+    <tr>
+      <td style="padding-bottom:28px;">
+        <div style="font-size:14px;line-height:1.9;color:#141414;max-width:38ch;">
+          This artwork has been officially archived.<br />
+          Collector access has been granted.
+        </div>
+        ${
+          isJa
+            ? `
+        <div style="margin-top:10px;padding-left:12px;border-left:1px solid #d8d2c8;font-size:13px;line-height:1.9;color:#6b665f;max-width:34ch;">
+          この作品はアーカイブされました。<br />
+          あなたにコレクターアクセスが付与されました。
+        </div>
+        `
+            : ""
+        }
+      </td>
+    </tr>
 
-  <!-- タイトル -->
-  <tr>
-    <td style="padding-bottom:18px;">
-      <div translate="no" style="font-family:'Cormorant Garamond', Georgia, serif;font-size:48px;line-height:0.96;font-weight:300;color:#141414;">
-        <span translate="no">${title}</span>
-      </div>
-    </td>
-  </tr>
+    ${
+      collectorName
+        ? `<tr>
+             <td style="padding-bottom:28px;">
+               <div translate="no" style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6b665f;">
+                 Recorded for
+               </div>
+               <div translate="no" style="padding-top:4px;font-size:14px;color:#141414;">
+                 ${collectorName}
+               </div>
+             </td>
+           </tr>`
+        : ""
+    }
 
-  <!-- 状態（翻訳OK） -->
-  <tr>
-    <td style="padding-bottom:28px;">
-      <div style="font-size:13px;line-height:1.85;color:#6b665f;max-width:34ch;">
-        This work is now archived.<br/>
-        Your collector access is now ready.
-      </div>
-    </td>
-  </tr>
+    ${
+      imageUrl
+        ? `<tr>
+             <td style="padding-bottom:28px;">
+               <img src="${imageUrl}" alt="${title}" style="width:100%;display:block;border:0;" />
+             </td>
+           </tr>`
+        : ""
+    }
 
-  <!-- 所有者（英語/漢字そのまま・翻訳禁止） -->
-  ${
-    collectorName
-      ? `<tr>
-           <td style="padding-bottom:28px;">
-             <div translate="no" style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6b665f;">
-               Recorded for
-             </div>
-             <div translate="no" style="padding-top:4px;font-size:14px;color:#141414;">
-               ${collectorName}
-             </div>
-           </td>
-         </tr>`
-      : ""
-  }
+    <tr>
+      <td style="padding-bottom:12px;">
+        <div style="font-size:13px;line-height:1.8;color:#141414;">
+          Access your private collector record below.
+        </div>
+        ${
+          isJa
+            ? `
+        <div style="margin-top:6px;font-size:12px;line-height:1.8;color:#6b665f;">
+          あなたのコレクターレコードはこちらからご確認いただけます。
+        </div>
+        `
+            : ""
+        }
+      </td>
+    </tr>
 
-  <!-- 画像 -->
-  ${
-    imageUrl
-      ? `<tr>
-           <td style="padding-bottom:28px;">
-             <img src="${imageUrl}" alt="${title}" style="width:100%;display:block;border:0;" />
-           </td>
-         </tr>`
-      : ""
-  }
+    <tr>
+      <td style="padding-bottom:20px;">
+        <a href="${ownerUrl}" target="_blank"
+          style="display:inline-block;padding:14px 22px;background:#141414;color:#f4f1ea;text-decoration:none;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;">
+          VIEW CERTIFICATE
+        </a>
+      </td>
+    </tr>
 
-  <!-- CTA前テキスト（翻訳OK） -->
-  <tr>
-    <td style="padding-bottom:12px;">
-      <div style="font-size:11px;color:#6b665f;">
-        Access your private collector record.
-      </div>
-    </td>
-  </tr>
-
-  <!-- CTA -->
-  <tr>
-    <td style="padding-bottom:20px;">
-      <a href="${ownerUrl}" target="_blank"
-        style="display:inline-block;padding:14px 22px;background:#141414;color:#f4f1ea;text-decoration:none;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;">
-        Enter Collector View
-      </a>
-    </td>
-  </tr>
-
-  <!-- メタ情報（翻訳禁止） -->
-  <tr>
-    <td translate="no" style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6b665f;padding-bottom:28px;">
-      Artwork ID: ${publicId}<br/>
-      Edition: ${edition}
-    </td>
-  </tr>
-
-</table>
-
+    <tr>
+      <td translate="no" style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6b665f;padding-bottom:28px;">
+        Artwork ID: ${publicId}<br/>
+        Edition: ${edition}
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
 }
 
 function buildCollectorEmailText(record) {
+  const locale = resolveEmailLocale(record);
+  const isJa = locale === "ja";
+
   const title = record.title || "Untitled";
   const ownerUrl = record.ownerArchiveUrl || "";
   const publicId = record.archiveId || "";
   const edition = record.edition || "";
   const collectorName = getCollectorName(record);
 
+  if (isJa) {
+    return [
+      "GLAMOPH",
+      "",
+      title,
+      "",
+      collectorName ? `${collectorName} 様` : "こんにちは。",
+      "",
+      "This artwork has been officially archived.",
+      "Collector access has been granted.",
+      "この作品はアーカイブされました。",
+      "あなたにコレクターアクセスが付与されました。",
+      "",
+      ...(collectorName ? [`Recorded for: ${collectorName}`, ""] : []),
+      `Artwork ID: ${publicId}`,
+      `Edition: ${edition}`,
+      "",
+      "Access your private collector record below.",
+      "あなたのコレクターレコードはこちらからご確認いただけます。",
+      ownerUrl,
+      "",
+      "GLAMOPH",
+    ].join("\n");
+  }
+
   return [
     "GLAMOPH",
     "",
     title,
     "",
-    "This work has been recorded.",
-    "Your collector access is now ready.",
+    collectorName ? `Hello ${collectorName},` : "Hello,",
+    "",
+    "This artwork has been officially archived.",
+    "Collector access has been granted.",
     "",
     ...(collectorName ? [`Recorded for: ${collectorName}`, ""] : []),
     `Artwork ID: ${publicId}`,
     `Edition: ${edition}`,
     "",
+    "Access your private collector record below.",
     ownerUrl,
     "",
-    "This link provides access to your private collector record."
+    "GLAMOPH",
   ].join("\n");
 }
+
 async function sendCollectorAccessEmail(record) {
   const to = String(record.customerEmail || "").trim();
 
@@ -506,7 +591,7 @@ async function sendCollectorAccessEmail(record) {
     return;
   }
 
-  const subject = `GLAMOPH — ${record.title || record.archiveId || "Artwork Record"}`;
+  const subject = buildCollectorEmailSubject(record);
 
   await resend.emails.send({
     from: resendFromEmail,
@@ -516,9 +601,8 @@ async function sendCollectorAccessEmail(record) {
     text: buildCollectorEmailText(record),
   });
 
-  console.log("Collector email sent:", to, record.archiveId);
+  console.log("Collector email sent:", to, record.archiveId, `locale=${resolveEmailLocale(record)}`);
 }
-
 async function getNextEdition({ artworkCode, sizeCode }) {
   const file = await readJsonFile("records-source.json", {});
   const source = normalizeMap(file.data);
