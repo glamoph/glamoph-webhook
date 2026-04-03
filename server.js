@@ -576,24 +576,21 @@ function buildCollectorEmailText(record) {
   }
 
   return [
-    "GLAMOPH",
-    "",
-    title,
-    "",
-    collectorName ? `Hello ${collectorName},` : "Hello,",
-    "",
-    "This artwork has been officially archived.",
-    "Collector access has been granted.",
-    "",
-    ...(collectorName ? [`Recorded for: ${collectorName}`, ""] : []),
-    `Artwork ID: ${publicId}`,
-    `Edition: ${edition}`,
-    "",
-    "Access your private collector record below.",
-    ownerUrl,
-    "",
-    "GLAMOPH",
-  ].join("\n");
+  "GLAMOPH",
+  "",
+  title,
+  "",
+  "This artwork has been officially archived.",
+  "Collector access has been granted.",
+  "",
+  `Artwork ID: ${publicId}`,
+  `Edition: ${edition}`,
+  "",
+  "Access your private collector record below.",
+  ownerUrl,
+  "",
+  "GLAMOPH",
+].join("\n");
 }
 
 async function sendCollectorAccessEmail(record) {
