@@ -258,83 +258,78 @@ function buildCollectorEmailHtml(record) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Collector Access</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
+
 <body style="margin:0;padding:0;background:#f4f1ea;color:#141414;font-family:Montserrat,Arial,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#f4f1ea;">
-    <tr>
-      <td align="center" style="padding:40px 20px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;max-width:640px;background:#f4f1ea;">
-          <tr>
-            <td style="padding:0 0 18px;">
-              <div style="font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#6b665f;">
-                GLAMOPH Collector Access
-              </div>
-            </td>
-          </tr>
 
-          <tr>
-            <td style="padding:0 0 18px;">
-              <div style="font-family:'Cormorant Garamond', Georgia, serif;font-size:48px;line-height:0.96;font-weight:300;color:#141414;">
-  <span translate="no">${title}</span>
-</div>
-            </td>
-          </tr>
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:auto;padding:40px 20px;">
 
-          <tr>
-            <td style="padding:0 0 22px;">
-              <div style="font-size:12px;line-height:1.8;color:#6b665f;max-width:36ch;">
-                Your collector record is now available. Enter your private access view to claim this edition.
-              </div>
-            </td>
-          </tr>
+  <!-- ブランド -->
+  <tr>
+    <td style="font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#6b665f;padding-bottom:18px;">
+      GLAMOPH
+    </td>
+  </tr>
 
-          ${
-            imageUrl
-              ? `<tr>
-                  <td style="padding:0 0 24px;">
-                    <img src="${imageUrl}" alt="${title}" style="display:block;width:100%;height:auto;border:0;" />
-                  </td>
-                </tr>`
-              : ""
-          }
+  <!-- タイトル -->
+  <tr>
+    <td style="padding-bottom:18px;">
+      <div style="font-family:'Cormorant Garamond', serif;font-size:46px;line-height:1.0;font-weight:300;">
+        <span translate="no">${title}</span>
+      </div>
+    </td>
+  </tr>
 
-          <tr>
-            <td style="padding:0 0 16px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-                <tr>
-                  <td align="center" style="background:#141414;">
-                    <a href="${ownerUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:14px 22px;color:#f4f1ea;text-decoration:none;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;">
-                      Enter Collector View
-                    </a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+  <!-- 宣言（ここが核） -->
+  <tr>
+    <td style="padding-bottom:28px;">
+      <div style="font-size:13px;line-height:1.9;color:#6b665f;max-width:34ch;">
+        This work is now recorded under your name.<br/>
+        Your collector access is ready.
+      </div>
+    </td>
+  </tr>
 
-          <tr>
-            <td style="padding:0 0 28px;">
-              <div style="font-size:10px;line-height:1.7;letter-spacing:0.08em;text-transform:uppercase;color:#6b665f;">
-                Artwork ID: ${publicId}<br />
-                Edition: ${edition}
-              </div>
-            </td>
-          </tr>
+  <!-- 画像 -->
+  ${
+    imageUrl
+      ? `<tr>
+          <td style="padding-bottom:28px;">
+            <img src="${imageUrl}" style="width:100%;display:block;" />
+          </td>
+        </tr>`
+      : ""
+  }
 
-          <tr>
-            <td style="padding-top:22px;border-top:1px solid rgba(20,20,20,0.12);">
-              <div style="font-size:11px;line-height:1.8;color:#6b665f;max-width:42ch;">
-                This access link is intended for the collector’s private record view.
-              </div>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+  <!-- CTA -->
+  <tr>
+    <td style="padding-bottom:18px;">
+      <a href="${ownerUrl}" target="_blank"
+        style="display:inline-block;padding:14px 22px;background:#141414;color:#f4f1ea;text-decoration:none;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;">
+        Enter Collector View
+      </a>
+    </td>
+  </tr>
+
+  <!-- メタ -->
+  <tr>
+    <td style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6b665f;padding-bottom:28px;">
+      Artwork ID: ${publicId}<br/>
+      Edition: ${edition}
+    </td>
+  </tr>
+
+  <!-- フッター -->
+  <tr>
+    <td style="border-top:1px solid rgba(20,20,20,0.1);padding-top:20px;font-size:11px;color:#6b665f;">
+      This link provides access to your private collector record.
+    </td>
+  </tr>
+
+</table>
+
 </body>
 </html>`;
 }
