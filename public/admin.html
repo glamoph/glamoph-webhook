@@ -861,14 +861,15 @@ title: document.getElementById('title'),
 
     function collectPayload() {
       const payload = {
-        artworkCode: normalizeArtworkCode(el.artworkCode.value),
-        size: normalizeSize(el.size.value),
-        title: el.title.value.trim(),
-        image: el.image.value.trim(),
-        artist: el.artist.value.trim(),
-        frame: el.frame.value.trim(),
-        medium: el.medium.value.trim()
-      };
+  artworkCode: normalizeArtworkCode(el.artworkCode.value),
+  sku: el.sku.value.trim(),
+  size: normalizeSize(el.size.value),
+  title: el.title.value.trim(),
+  image: el.image.value.trim(),
+  artist: el.artist.value.trim(),
+  frame: el.frame.value.trim(),
+  medium: el.medium.value.trim()
+};
 
       const edition = el.editionNumber.value.trim();
       if (edition !== '') {
