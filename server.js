@@ -533,6 +533,54 @@ async function findIssuedByOrderId(orderId) {
   });
 }
 
+async function resendCollectorAccessByOrderId(orderId) {
+  const existing = await findIssuedByOrderId(orderId);
+
+  if (!existing.length) {
+    return {
+      ok: false,
+      error: "No issued record found for this orderId",
+    };
+  }
+
+  const results = [];
+
+  for (const item of existing) {
+    const internalId = String(item?.internalId || "").trim();
+    if (!internalId) continue;
+
+    const file = await readJsonFile(`records/${internalId}/data.json`, null);
+    const record = file?.data;
+
+    if (!record) {
+      results.push({
+        ok: false,
+        internalId,
+        error: "Record data not found",
+      });
+      continue;
+    }
+
+    await sendCollectorAccessEmail(record);
+
+    results.push({
+      ok: true,
+      internalId,
+      archiveId: record.archiveId || "",
+      title: record.title || "",
+      email: record.customerEmail || "",
+      ownerArchiveUrl: record.ownerArchiveUrl || "",
+    });
+  }
+
+  return {
+    ok: true,
+    orderId,
+    resentCount: results.filter((x) => x.ok).length,
+    results,
+  };
+}
+
 async function processOrderWebhook(order) {
   const orderId = order?.id;
   const orderName = order?.name || "";
