@@ -1011,7 +1011,18 @@ title: document.getElementById('title'),
       el.publishForm.addEventListener('submit', publishRecord);
       el.copyJsonBtn.addEventListener('click', copyJson);
       el.openArchiveBtn.addEventListener('click', openArchive);
+　　　　      if (el.loadOrderBtn) {
+        el.loadOrderBtn.addEventListener('click', loadOrderDetail);
+      }
 
+      if (el.loadOrderId) {
+        el.loadOrderId.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            loadOrderDetail();
+          }
+        });
+      }
       [
   el.artworkCode,
   el.sku,
