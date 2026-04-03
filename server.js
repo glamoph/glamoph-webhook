@@ -28,6 +28,67 @@ app.get("/", (req, res) => {
   res.send("GLAMOPH Verify System");
 });
 
+app.post('/api/publish', express.json(), async (req, res) => {
+  try {
+    const {
+      artworkCode,
+      size,
+      title,
+      image,
+      artist,
+      frame,
+      medium,
+      editionNumber
+    } = req.body;
+
+    if (!artworkCode || !size || !title) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Missing required fields'
+      });
+    }
+
+    const editionMap = {
+      S: 50,
+      M: 30,
+      L: 10
+    };
+
+    const total = editionMap[size] || 50;
+    const edition = editionNumber || 1;
+
+    const artworkId = `GLA-${artworkCode}-${size}-${String(edition).padStart(3, '0')}`;
+
+    const record = {
+      verified: "Artwork Verified",
+      title,
+      artworkId,
+      edition: `Edition ${String(edition).padStart(2,'0')} / ${total}`,
+      artist: artist || "GLAMOPH",
+      medium: medium || "Archival pigment print on fine art paper",
+      size: size,
+      frame: frame || "Black",
+      archiveUrl: `${VERIFY_PUBLIC_BASE_URL}/${artworkId}`,
+      image: image || `/images/${artworkCode}.jpg`
+    };
+
+    return res.json({
+      ok: true,
+      record,
+      github: {
+        filePath: `records/${artworkId}/data.json`,
+        commitSha: "mock"
+      }
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+      ok: false,
+      error: err.message
+    });
+  }
+});
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
