@@ -877,12 +877,16 @@ title: document.getElementById('title'),
       `).join('');
     }
 
-        function renderJsonOutput(result) {
+           function renderJsonOutput(result) {
       if (!result) {
         el.jsonOutput.textContent = 'No publish yet.';
         renderResultMeta(null);
         return;
       }
+
+      el.jsonOutput.textContent = JSON.stringify(result.record, null, 2);
+      renderResultMeta(result);
+    }
 
     function applyOrderDraftToForm(draft) {
       if (!draft) return;
