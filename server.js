@@ -186,10 +186,19 @@ function buildPageHtml(record, recordId, options = {}) {
           <h1 class="archive-title">${safeTitle}</h1>
 
           <div class="archive-meta-line">
-            <span class="archive-meta-id">${safeArtworkId}</span>
-            <span class="archive-meta-divider">/</span>
-            <span class="archive-meta-edition" title="Edition number">${safeEdition}</span>
-          </div>
+  <span class="archive-meta-id">${safeArtworkId}</span>
+  <span class="archive-meta-divider">/</span>
+  <span class="archive-meta-edition" title="Edition number">${safeEdition}</span>
+</div>
+
+${
+  isOwner && safeCollectorName
+    ? `<div class="archive-collector-mark">
+         <span class="archive-collector-label">Recorded for</span>
+         <span class="archive-collector-name">${safeCollectorName}</span>
+       </div>`
+    : ""
+}
         </div>
 
         <figure class="archive-artwork">
