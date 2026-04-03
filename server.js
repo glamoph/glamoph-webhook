@@ -31,16 +31,16 @@ app.get("/", (req, res) => {
 app.post('/api/publish', express.json(), async (req, res) => {
   try {
     const {
-  artworkCode,
-  sku,
-  size,
-  title,
-  image,
-  artist,
-  frame,
-  medium,
-  editionNumber
-} = req.body;
+      artworkCode,
+      sku,
+      size,
+      title,
+      image,
+      artist,
+      frame,
+      medium,
+      editionNumber
+    } = req.body;
 
     if (!artworkCode || !size || !title) {
       return res.status(400).json({
@@ -64,13 +64,13 @@ app.post('/api/publish', express.json(), async (req, res) => {
       verified: "Artwork Verified",
       title,
       artworkId,
-      edition: `Edition ${String(edition).padStart(2,'0')} / ${total}`,
+      edition: `Edition ${String(edition).padStart(2, '0')} / ${total}`,
       artist: artist || "GLAMOPH",
       medium: medium || "Archival pigment print on fine art paper",
       size: size,
       frame: frame || "Black",
       archiveUrl: `${VERIFY_PUBLIC_BASE_URL}/${artworkId}`,
-      image: image || `/images/${sku}.jpg`
+      image: image || (sku ? `/images/${sku}.jpg` : `/images/${artworkCode}.jpg`)
     };
 
     return res.json({
