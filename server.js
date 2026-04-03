@@ -384,10 +384,10 @@ function buildCollectorEmailSubject(record) {
   const title = String(record?.title || "").trim();
 
   if (locale === "ja") {
-    return title
-      ? `GLAMOPH 証明書が発行されました – ${title}`
-      : `GLAMOPH 証明書が発行されました`;
-  }
+  return title
+    ? `[GLAMOPH] 証明書が発行されました – ${title}`
+    : `[GLAMOPH] 証明書が発行されました`;
+}
 
   return title
     ? `Your GLAMOPH Certificate is Ready – ${title}`
