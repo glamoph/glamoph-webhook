@@ -393,7 +393,6 @@ function buildCollectorEmailHtml(record) {
   const locale = resolveEmailLocale(record);
   const isJa = locale === "ja";
 
-  const title = escapeHtml(record.title || "Untitled");
   const ownerUrl = escapeHtml(record.ownerArchiveUrl || "");
   const publicId = escapeHtml(record.archiveId || "");
   const edition = escapeHtml(record.edition || "");
@@ -404,139 +403,108 @@ function buildCollectorEmailHtml(record) {
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="google" content="notranslate" />
-  <title>${escapeHtml(buildCollectorEmailSubject(record))}</title>
 </head>
 <body style="margin:0;padding:0;background:#f4f1ea;color:#141414;font-family:Arial,Helvetica,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:auto;padding:40px 20px;">
+  <table width="100%" style="max-width:640px;margin:auto;padding:40px 20px;">
+
     <tr>
-      <td translate="no" style="font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#6b665f;padding-bottom:18px;">
+      <td style="font-size:11px;letter-spacing:0.16em;color:#6b665f;padding-bottom:20px;">
         GLAMOPH
       </td>
     </tr>
 
     <tr>
-      <td style="padding-bottom:18px;">
-        <div translate="no" style="font-family:'Cormorant Garamond', Georgia, serif;font-size:48px;line-height:0.96;font-weight:300;color:#141414;">
-          <span translate="no">${title}</span>
-        </div>
-      </td>
-    </tr>
-
-    <tr>
-      <td style="padding-bottom:28px;">
-        <div style="font-size:14px;line-height:1.9;color:#141414;max-width:38ch;">
-          この作品はアーカイブされました。<br />
-          コレクターアクセスが付与されました。
-        </div>
+      <td style="font-size:14px;line-height:1.9;padding-bottom:28px;">
+        この作品はアーカイブされました。<br />
+        コレクターアクセスが付与されました。
       </td>
     </tr>
 
     ${
       imageUrl
-        ? `<tr>
-             <td style="padding-bottom:28px;">
-               <img src="${imageUrl}" alt="${title}" style="width:100%;display:block;border:0;" />
-             </td>
-           </tr>`
+        ? `<tr><td style="padding-bottom:28px;">
+            <img src="${imageUrl}" style="width:100%;" />
+          </td></tr>`
         : ""
     }
 
     <tr>
-      <td style="padding-bottom:12px;">
-        <div style="font-size:13px;line-height:1.8;color:#141414;">
-          あなたのコレクターレコードはこちらからご確認いただけます。
-        </div>
+      <td style="font-size:13px;padding-bottom:14px;">
+        あなたのコレクターレコードはこちらからご確認いただけます。
       </td>
     </tr>
 
     <tr>
-      <td style="padding-bottom:20px;">
-        <a href="${ownerUrl}" target="_blank"
-          style="display:inline-block;padding:14px 22px;background:#141414;color:#f4f1ea;text-decoration:none;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;">
+      <td style="padding-bottom:24px;">
+        <a href="${ownerUrl}" style="padding:14px 22px;background:#141414;color:#fff;text-decoration:none;font-size:11px;">
           VIEW CERTIFICATE
         </a>
       </td>
     </tr>
 
     <tr>
-      <td translate="no" style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6b665f;padding-bottom:28px;">
+      <td style="font-size:10px;color:#6b665f;">
         Artwork ID: ${publicId}<br/>
         Edition: ${edition}
       </td>
     </tr>
+
   </table>
 </body>
 </html>`;
   }
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="google" content="notranslate" />
-  <title>${escapeHtml(buildCollectorEmailSubject(record))}</title>
 </head>
 <body style="margin:0;padding:0;background:#f4f1ea;color:#141414;font-family:Arial,Helvetica,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:auto;padding:40px 20px;">
+  <table width="100%" style="max-width:640px;margin:auto;padding:40px 20px;">
+
     <tr>
-      <td translate="no" style="font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#6b665f;padding-bottom:18px;">
+      <td style="font-size:11px;letter-spacing:0.16em;color:#6b665f;padding-bottom:20px;">
         GLAMOPH
       </td>
     </tr>
 
     <tr>
-      <td style="padding-bottom:18px;">
-        <div translate="no" style="font-family:'Cormorant Garamond', Georgia, serif;font-size:48px;line-height:0.96;font-weight:300;color:#141414;">
-          <span translate="no">${title}</span>
-        </div>
-      </td>
-    </tr>
-
-    <tr>
-      <td style="padding-bottom:28px;">
-        <div style="font-size:14px;line-height:1.9;color:#141414;max-width:38ch;">
-          This artwork has been officially archived.<br />
-          Collector access has been granted.
-        </div>
+      <td style="font-size:14px;line-height:1.9;padding-bottom:28px;">
+        This artwork has been officially archived.<br />
+        Collector access has been granted.
       </td>
     </tr>
 
     ${
       imageUrl
-        ? `<tr>
-             <td style="padding-bottom:28px;">
-               <img src="${imageUrl}" alt="${title}" style="width:100%;display:block;border:0;" />
-             </td>
-           </tr>`
+        ? `<tr><td style="padding-bottom:28px;">
+            <img src="${imageUrl}" style="width:100%;" />
+          </td></tr>`
         : ""
     }
 
     <tr>
-      <td style="padding-bottom:12px;">
-        <div style="font-size:13px;line-height:1.8;color:#141414;">
-          Access your private collector record below.
-        </div>
+      <td style="font-size:13px;padding-bottom:14px;">
+        Access your private collector record below.
       </td>
     </tr>
 
     <tr>
-      <td style="padding-bottom:20px;">
-        <a href="${ownerUrl}" target="_blank"
-          style="display:inline-block;padding:14px 22px;background:#141414;color:#f4f1ea;text-decoration:none;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;">
+      <td style="padding-bottom:24px;">
+        <a href="${ownerUrl}" style="padding:14px 22px;background:#141414;color:#fff;text-decoration:none;font-size:11px;">
           VIEW CERTIFICATE
         </a>
       </td>
     </tr>
 
     <tr>
-      <td translate="no" style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6b665f;padding-bottom:28px;">
+      <td style="font-size:10px;color:#6b665f;">
         Artwork ID: ${publicId}<br/>
         Edition: ${edition}
       </td>
     </tr>
+
   </table>
 </body>
 </html>`;
