@@ -927,6 +927,41 @@ app.post(
   }
 );
 
+app.post(
+  "/admin/resend-collector-access",
+  express.json({ limit: "1mb" }),
+  async (req, res) => {
+    try {
+      const adminToken = String(req.get("x-admin-token") || req.query.token || "").trim();
+      const expectedToken = String(process.env.ADMIN_REISSUE_TOKEN || "").trim();
+
+      if (!expectedToken || adminToken !== expectedToken) {
+        return res.status(401).json({ ok: false, error: "Unauthorized" });
+      }
+
+      const orderId = normalizeOrderId(req.body?.orderId);
+
+      if (!orderId) {
+        return res.status(400).json({ ok: false, error: "Missing orderId" });
+      }
+
+      const result = await resendCollectorAccessByOrderId(orderId);
+
+      if (!result.ok) {
+        return res.status(404).json(result);
+      }
+
+      return res.status(200).json(result);
+    } catch (error) {
+      console.error("ADMIN RESEND COLLECTOR ACCESS ERROR:", error);
+      return res.status(500).json({
+        ok: false,
+        error: error?.message || "Internal Server Error",
+      });
+    }
+  }
+);
+
 app.get("/:recordId", async (req, res) => {
   const publicId = String(req.params.recordId || "").trim().toUpperCase();
 
