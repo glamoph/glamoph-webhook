@@ -1015,7 +1015,8 @@ title: document.getElementById('title'),
       el.publishForm.addEventListener('submit', publishRecord);
       el.copyJsonBtn.addEventListener('click', copyJson);
       el.openArchiveBtn.addEventListener('click', openArchive);
-　　　　      if (el.loadOrderBtn) {
+
+      if (el.loadOrderBtn) {
         el.loadOrderBtn.addEventListener('click', loadOrderDetail);
       }
 
@@ -1027,20 +1028,33 @@ title: document.getElementById('title'),
           }
         });
       }
+
       [
-  el.artworkCode,
-  el.sku,
-  el.size,
-  el.editionNumber,
-  el.title,
-  el.image,
-  el.artist,
-  el.frame,
-  el.medium
-].forEach((node) => {
-  node.addEventListener('input', onFieldInput);
-  node.addEventListener('change', onFieldInput);
-});
+        el.artworkCode,
+        el.sku,
+        el.size,
+        el.editionNumber,
+        el.title,
+        el.image,
+        el.artist,
+        el.frame,
+        el.medium
+      ].forEach((node) => {
+        node.addEventListener('input', onFieldInput);
+        node.addEventListener('change', onFieldInput);
+      });
+
+      if (el.sku) {
+        el.sku.addEventListener('input', () => {
+          const code = extractArtworkCodeFromSku(el.sku.value);
+          const size = extractSizeFromSku(el.sku.value);
+
+          if (code) el.artworkCode.value = code;
+          if (size) el.size.value = size;
+
+          renderPreview(buildPreviewDraft());
+        });
+      }
 
       if (el.resendBtn) {
         el.resendBtn.addEventListener('click', async () => {
