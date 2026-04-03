@@ -770,6 +770,12 @@ title: document.getElementById('title'),
   const parts = sku.split('-');
   return parts[1] || '';
 }
+
+     function extractSizeFromSku(sku) {
+      if (!sku) return '';
+      const parts = String(sku).trim().toUpperCase().split('-');
+      return parts[2] || '';
+    }
     
     function pad3(value) {
       return String(value).padStart(3, '0');
