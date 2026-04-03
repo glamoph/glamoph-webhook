@@ -111,6 +111,16 @@ function formatArchiveDate(value) {
   }).format(date);
 }
 
+function getCollectorName(record) {
+  const firstName = String(record.customerFirstName || "").trim();
+  const lastName = String(record.customerLastName || "").trim();
+  const fullName = `${firstName} ${lastName}`.trim();
+
+  if (fullName) return fullName;
+
+  return "";
+}
+
 function buildPublicId({ artworkCode, sizeCode, editionNumber }) {
   return `GLA-${artworkCode}-${sizeCode}-${pad3(editionNumber)}`;
 }
