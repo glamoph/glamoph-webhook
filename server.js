@@ -403,14 +403,10 @@ function buildCollectorEmailHtml(record) {
   const publicId = escapeHtml(record.archiveId || "");
   const edition = escapeHtml(record.edition || "");
   const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
-  const collectorName = escapeHtml(getCollectorName(record));
 
-  const greeting = collectorName
-    ? (isJa ? `${collectorName} 様` : `Hello ${collectorName},`)
-    : (isJa ? `こんにちは。` : `Hello,`);
-
-  return `<!DOCTYPE html>
-<html lang="${isJa ? "ja" : "en"}">
+  if (isJa) {
+    return `<!DOCTYPE html>
+<html lang="ja">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -434,9 +430,72 @@ function buildCollectorEmailHtml(record) {
     </tr>
 
     <tr>
-      <td style="padding-bottom:22px;">
-        <div style="font-size:15px;line-height:1.8;color:#141414;">
-          ${greeting}
+      <td style="padding-bottom:28px;">
+        <div style="font-size:14px;line-height:1.9;color:#141414;max-width:38ch;">
+          この作品はアーカイブされました。<br />
+          コレクターアクセスが付与されました。
+        </div>
+      </td>
+    </tr>
+
+    ${
+      imageUrl
+        ? `<tr>
+             <td style="padding-bottom:28px;">
+               <img src="${imageUrl}" alt="${title}" style="width:100%;display:block;border:0;" />
+             </td>
+           </tr>`
+        : ""
+    }
+
+    <tr>
+      <td style="padding-bottom:12px;">
+        <div style="font-size:13px;line-height:1.8;color:#141414;">
+          あなたのコレクターレコードはこちらからご確認いただけます。
+        </div>
+      </td>
+    </tr>
+
+    <tr>
+      <td style="padding-bottom:20px;">
+        <a href="${ownerUrl}" target="_blank"
+          style="display:inline-block;padding:14px 22px;background:#141414;color:#f4f1ea;text-decoration:none;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;">
+          VIEW CERTIFICATE
+        </a>
+      </td>
+    </tr>
+
+    <tr>
+      <td translate="no" style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6b665f;padding-bottom:28px;">
+        Artwork ID: ${publicId}<br/>
+        Edition: ${edition}
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+  }
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="google" content="notranslate" />
+  <title>${escapeHtml(buildCollectorEmailSubject(record))}</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f1ea;color:#141414;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:auto;padding:40px 20px;">
+    <tr>
+      <td translate="no" style="font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#6b665f;padding-bottom:18px;">
+        GLAMOPH
+      </td>
+    </tr>
+
+    <tr>
+      <td style="padding-bottom:18px;">
+        <div translate="no" style="font-family:'Cormorant Garamond', Georgia, serif;font-size:48px;line-height:0.96;font-weight:300;color:#141414;">
+          <span translate="no">${title}</span>
         </div>
       </td>
     </tr>
@@ -447,33 +506,8 @@ function buildCollectorEmailHtml(record) {
           This artwork has been officially archived.<br />
           Collector access has been granted.
         </div>
-        ${
-          isJa
-            ? `
-        <div style="margin-top:10px;padding-left:12px;border-left:1px solid #d8d2c8;font-size:13px;line-height:1.9;color:#6b665f;max-width:34ch;">
-          この作品はアーカイブされました。<br />
-          あなたにコレクターアクセスが付与されました。
-        </div>
-        `
-            : ""
-        }
       </td>
     </tr>
-
-    ${
-      collectorName
-        ? `<tr>
-             <td style="padding-bottom:28px;">
-               <div translate="no" style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6b665f;">
-                 Recorded for
-               </div>
-               <div translate="no" style="padding-top:4px;font-size:14px;color:#141414;">
-                 ${collectorName}
-               </div>
-             </td>
-           </tr>`
-        : ""
-    }
 
     ${
       imageUrl
@@ -490,15 +524,6 @@ function buildCollectorEmailHtml(record) {
         <div style="font-size:13px;line-height:1.8;color:#141414;">
           Access your private collector record below.
         </div>
-        ${
-          isJa
-            ? `
-        <div style="margin-top:6px;font-size:12px;line-height:1.8;color:#6b665f;">
-          あなたのコレクターレコードはこちらからご確認いただけます。
-        </div>
-        `
-            : ""
-        }
       </td>
     </tr>
 
