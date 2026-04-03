@@ -286,8 +286,8 @@ function buildCollectorEmailHtml(record) {
   <tr>
     <td style="padding-bottom:28px;">
       <div style="font-size:13px;line-height:1.9;color:#6b665f;max-width:34ch;">
-        This work is now recorded under your name.<br/>
-        Your collector access is ready.
+        This work has been recorded.<br/>
+        Your collector access is now ready.
       </div>
     </td>
   </tr>
