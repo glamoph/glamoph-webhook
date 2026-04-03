@@ -643,6 +643,146 @@ async function resendCollectorAccessByOrderId(orderId) {
   };
 }
 
+function buildAdminDraftFromOrder(order) {
+  const lineItems = Array.isArray(order?.line_items) ? order.line_items : [];
+
+  const nonArtworkKeywords = [
+    "LENS-PROTECT",
+    "CASE-LEATHER",
+    "PROTECT",
+    "2YR",
+    "PREM",
+  ];
+
+  const artworkItem = lineItems.find((item) => {
+    const sku = String(item?.sku || "").trim().toUpperCase();
+    const title = String(item?.title || "").trim();
+    const variantTitle = String(item?.variant_title || "").trim().toUpperCase();
+
+    const looksLikeNonArtwork =
+      nonArtworkKeywords.some((kw) => sku.includes(kw)) ||
+      nonArtworkKeywords.some((kw) => variantTitle.includes(kw)) ||
+      /protect|case|leather/i.test(title);
+
+    return !looksLikeNonArtwork;
+  });
+
+  if (!artworkItem) {
+    throw new Error("No artwork line item found in this order");
+  }
+
+  const sku = String(artworkItem?.sku || "").trim().toUpperCase();
+  const title = String(artworkItem?.title || "").trim();
+  const variantTitle = String(artworkItem?.variant_title || "").trim().toUpperCase();
+
+  let artworkCode = "";
+  let sizeCode = "";
+  let frameCode = "";
+
+  if (sku) {
+    const parsed = parseSku(sku);
+    if (parsed.valid) {
+      artworkCode = parsed.artworkCode;
+      sizeCode = parsed.sizeCode;
+      frameCode = parsed.frameCode;
+    }
+  }
+
+  if (!sizeCode) {
+    if (/\bS\b/.test(variantTitle)) sizeCode = "S";
+    else if (/\bM\b/.test(variantTitle)) sizeCode = "M";
+    else if (/\bL\b/.test(variantTitle)) sizeCode = "L";
+  }
+
+  if (!artworkCode || !sizeCode) {
+    throw new Error("Could not resolve artworkCode / size from this order");
+  }
+
+  return {
+    orderId: String(order?.id || ""),
+    orderName: String(order?.name || ""),
+    lineItemId: String(artworkItem?.id || ""),
+    sku,
+    artworkCode,
+    size: sizeCode,
+    title,
+    image: `/images/${artworkCode}.jpg`,
+    artist: "GLAMOPH",
+    frame: frameCode === "WHT" ? "White" : "Black",
+    medium: "Archival pigment print on fine art paper",
+  };
+}
+
+async function fetchShopifyOrderForAdmin(orderId) {
+  const shop = String(process.env.SHOPIFY_STORE_DOMAIN || "").trim();
+  const adminTokenValue = String(process.env.SHOPIFY_ADMIN_ACCESS_TOKEN || "").trim();
+
+  if (!shop || !adminTokenValue) {
+    throw new Error("Missing SHOPIFY_STORE_DOMAIN or SHOPIFY_ADMIN_ACCESS_TOKEN");
+  }
+
+  const normalized = String(orderId || "").trim().replace(/^#/, "");
+
+  if (!/^\d+$/.test(normalized)) {
+    throw new Error("Please enter Shopify numeric Order ID");
+  }
+
+  const endpoint = `https://${shop}/admin/api/2025-01/orders/${normalized}.json?status=any`;
+
+  const response = await fetch(endpoint, {
+    method: "GET",
+    headers: {
+      "X-Shopify-Access-Token": adminTokenValue,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Failed to fetch order from Shopify: ${text}`);
+  }
+
+  const data = await response.json();
+  const order = data?.order;
+
+  if (!order?.id) {
+    throw new Error("Order not found");
+  }
+
+  return order;
+}
+
+app.get("/admin/order-detail", async (req, res) => {
+  try {
+    const orderId = String(req.query.orderId || "").trim();
+
+    if (!orderId) {
+      return res.status(400).json({
+        ok: false,
+        error: "Missing orderId",
+      });
+    }
+
+    const order = await fetchShopifyOrderForAdmin(orderId);
+    const draft = buildAdminDraftFromOrder(order);
+
+    return res.status(200).json({
+      ok: true,
+      order: {
+        id: String(order.id),
+        name: String(order.name || ""),
+      },
+      draft,
+    });
+  } catch (error) {
+    console.error("ADMIN ORDER DETAIL ERROR:", error);
+    return res.status(500).json({
+      ok: false,
+      error: error?.message || "Internal Server Error",
+    });
+  }
+});
+
 async function processOrderWebhook(order) {
   const orderId = order?.id;
   const orderName = order?.name || "";
