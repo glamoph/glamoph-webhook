@@ -155,9 +155,9 @@ function buildPageHtml(record, recordId, options = {}) {
   const safeSize = escapeHtml(record.size || "");
   const safeFrame = escapeHtml(record.frame || "");
   const safeArchiveDate = escapeHtml(record.archiveDate || "");
+  const safeArchiveUrl = `${VERIFY_PUBLIC_BASE_URL}/${recordId}`;
   const collectorName = getCollectorName(record);
   const safeCollectorName = escapeHtml(collectorName);
-  const safeArchiveUrl = `${VERIFY_PUBLIC_BASE_URL}/${recordId}`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -169,6 +169,28 @@ function buildPageHtml(record, recordId, options = {}) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/archive.css" />
+  <style>
+    .archive-collector-mark {
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+      margin-top: 14px;
+      color: #6b665f;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .archive-collector-label {
+      opacity: 0.72;
+    }
+
+    .archive-collector-name {
+      color: #141414;
+      letter-spacing: 0.04em;
+      text-transform: none;
+    }
+  </style>
 </head>
 <body>
   <main class="archive-page">
@@ -186,19 +208,19 @@ function buildPageHtml(record, recordId, options = {}) {
           <h1 class="archive-title">${safeTitle}</h1>
 
           <div class="archive-meta-line">
-  <span class="archive-meta-id">${safeArtworkId}</span>
-  <span class="archive-meta-divider">/</span>
-  <span class="archive-meta-edition" title="Edition number">${safeEdition}</span>
-</div>
+            <span class="archive-meta-id">${safeArtworkId}</span>
+            <span class="archive-meta-divider">/</span>
+            <span class="archive-meta-edition" title="Edition number">${safeEdition}</span>
+          </div>
 
-${
-  isOwner && safeCollectorName
-    ? `<div class="archive-collector-mark">
-         <span class="archive-collector-label">Recorded for</span>
-         <span class="archive-collector-name">${safeCollectorName}</span>
-       </div>`
-    : ""
-}
+          ${
+            isOwner && safeCollectorName
+              ? `<div class="archive-collector-mark">
+                   <span class="archive-collector-label">Recorded for</span>
+                   <span class="archive-collector-name">${safeCollectorName}</span>
+                 </div>`
+              : ""
+          }
         </div>
 
         <figure class="archive-artwork">
@@ -236,9 +258,9 @@ ${
             ${
               safeFrame
                 ? `<div class="archive-record__row">
-              <dt>Frame</dt>
-              <dd>${safeFrame}</dd>
-            </div>`
+                     <dt>Frame</dt>
+                     <dd>${safeFrame}</dd>
+                   </div>`
                 : ""
             }
 
@@ -251,6 +273,15 @@ ${
               <dt>Archive URL</dt>
               <dd><a href="${safeArchiveUrl}" target="_blank" rel="noopener noreferrer">${safeArchiveUrl}</a></dd>
             </div>
+
+            ${
+              isOwner && safeCollectorName
+                ? `<div class="archive-record__row archive-record__row--collector">
+                     <dt>Recorded for</dt>
+                     <dd>${safeCollectorName}</dd>
+                   </div>`
+                : ""
+            }
           </dl>
         </div>
       </section>
