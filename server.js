@@ -706,7 +706,7 @@ function buildAdminDraftFromOrder(order) {
     artworkCode,
     size: sizeCode,
     title,
-    image: `/images/${artworkCode}.jpg`,
+    image: `https://glamoph.github.io/glamoph-archive/images/${artworkCode}.jpg`,
     artist: "GLAMOPH",
     frame: frameCode === "WHT" ? "White" : "Black",
     medium: "Archival pigment print on fine art paper",
