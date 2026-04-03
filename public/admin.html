@@ -944,74 +944,87 @@ title: document.getElementById('title'),
     }
 
     function bindEvents() {
-      el.publishForm.addEventListener('submit', publishRecord);
-      el.copyJsonBtn.addEventListener('click', copyJson);
-      el.openArchiveBtn.addEventListener('click', openArchive);
+  el.publishForm.addEventListener('submit', publishRecord);
+  el.copyJsonBtn.addEventListener('click', copyJson);
+  el.openArchiveBtn.addEventListener('click', openArchive);
 
-      [
-  el.artworkCode,
-  el.sku,
-  el.size,
-  el.editionNumber,
-  el.title,
-  el.image,
-  el.artist,
-  el.frame,
-  el.medium
-].forEach((node) => {
-  node.addEventListener('input', onFieldInput);
-  node.addEventListener('change', onFieldInput);
-});
+  [
+    el.artworkCode,
+    el.sku,
+    el.size,
+    el.editionNumber,
+    el.title,
+    el.image,
+    el.artist,
+    el.frame,
+    el.medium
+  ].forEach((node) => {
+    if (!node) return; // ← 安全対策（これ重要）
+    node.addEventListener('input', onFieldInput);
+    node.addEventListener('change', onFieldInput);
+  });
 
-      if (el.resendBtn) {
-        el.resendBtn.addEventListener('click', async () => {
-          const orderId = String(el.resendOrderId.value || '').trim();
-          const token = String(el.resendAdminToken.value || '').trim();
+  if (el.resendBtn) {
+    el.resendBtn.addEventListener('click', async () => {
+      const orderId = String(el.resendOrderId.value || '').trim();
+      const token = String(el.resendAdminToken.value || '').trim();
 
-          if (!orderId) {
-            el.resendStatus.textContent = 'Missing orderId';
-            el.resendStatus.className = 'status error';
-            return;
-          }
-
-          if (!token) {
-            el.resendStatus.textContent = 'Missing admin token';
-            el.resendStatus.className = 'status error';
-            return;
-          }
-
-          el.resendBtn.disabled = true;
-          el.resendStatus.textContent = 'Sending...';
-          el.resendStatus.className = 'status';
-
-          try {
-            const res = await fetch('https://verify.glamoph.com/admin/resend-collector-access', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-admin-token': token
-              },
-              body: JSON.stringify({ orderId })
-            });
-
-            const data = await res.json();
-
-            if (data.ok) {
-              el.resendStatus.textContent = 'Collector access sent successfully.';
-              el.resendStatus.className = 'status success';
-            } else {
-              el.resendStatus.textContent = data.error || 'Failed';
-              el.resendStatus.className = 'status error';
-            }
-          } catch (err) {
-            el.resendStatus.textContent = err.message;
-            el.resendStatus.className = 'status error';
-          } finally {
-            el.resendBtn.disabled = false;
-          }
-        });
+      if (!orderId) {
+        el.resendStatus.textContent = 'Missing orderId';
+        el.resendStatus.className = 'status error';
+        return;
       }
-    }
+
+      if (!token) {
+        el.resendStatus.textContent = 'Missing admin token';
+        el.resendStatus.className = 'status error';
+        return;
+      }
+
+      el.resendBtn.disabled = true;
+      el.resendStatus.textContent = 'Sending...';
+      el.resendStatus.className = 'status';
+
+      try {
+        const res = await fetch('https://verify.glamoph.com/admin/resend-collector-access', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-token': token
+          },
+          body: JSON.stringify({ orderId })
+        });
+
+        const data = await res.json();
+
+        if (data.ok) {
+          el.resendStatus.textContent = 'Collector access sent successfully.';
+          el.resendStatus.className = 'status success';
+        } else {
+          el.resendStatus.textContent = data.error || 'Failed';
+          el.resendStatus.className = 'status error';
+        }
+      } catch (err) {
+        el.resendStatus.textContent = err.message;
+        el.resendStatus.className = 'status error';
+      } finally {
+        el.resendBtn.disabled = false;
+      }
+    });
+  }
+
+  /* ▼▼▼ここに追加▼▼▼ */
+  if (el.sku) {
+    el.sku.addEventListener('input', () => {
+      const code = extractArtworkCodeFromSku(el.sku.value);
+      if (code) {
+        el.artworkCode.value = code;
+        renderPreview(buildPreviewDraft());
+      }
+    });
+  }
+  /* ▲▲▲ここまで▲▲▲ */
+}
 
     function init() {
       bindEvents();
