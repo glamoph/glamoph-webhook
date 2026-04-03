@@ -69,7 +69,7 @@ app.post('/api/publish', express.json(), async (req, res) => {
       size: size,
       frame: frame || "Black",
       archiveUrl: `${VERIFY_PUBLIC_BASE_URL}/${artworkId}`,
-      image: image || `/images/${artworkCode}.jpg`
+      image: image || `/images/${sku}.jpg`
     };
 
     return res.json({
