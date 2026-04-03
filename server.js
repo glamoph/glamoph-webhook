@@ -375,7 +375,7 @@ async function sendCollectorAccessEmail(record) {
     return;
   }
 
-  const subject = `GLAMOPH — ${record.title || record.archiveId || "Artwork Record"}`;
+  const subject = `${record.title} — GLAMOPH`;
 
   await resend.emails.send({
     from: resendFromEmail,
