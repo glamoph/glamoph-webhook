@@ -354,7 +354,7 @@ function buildCollectorEmailHtml(record) {
                     <div style="font-size:10px;line-height:1.7;letter-spacing:0.08em;text-transform:uppercase;color:#6b665f;">
                       Recorded for
                     </div>
-                    <div style="padding-top:4px;font-size:14px;line-height:1.6;color:#141414;">
+                    <div translate="no" style="padding-top:4px;font-size:14px;line-height:1.6;color:#141414;">
                       ${collectorName}
                     </div>
                   </td>
