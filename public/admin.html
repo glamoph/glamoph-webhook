@@ -1200,34 +1200,27 @@ if (resendBtn) {
 		
     }
 
-    async function init() {
-      bindEvents();
-      renderJsonOutput(null);
-      renderPreview(buildPreviewDraft());
+   async function init() {
+  bindEvents();
+  renderJsonOutput(null);
+  renderPreview(buildPreviewDraft());
 
-      try {
-        await loadConfig();
-      } catch (error) {
-        el.configChip.textContent = 'Config Error';
-        setStatus(error.message, 'error');
-      }
+  try {
+    await loadArtworks();
+  } catch (error) {
+    setStatus(error.message, 'error');
+  }
 
-      try {
-        await loadArtworks();
-      } catch (error) {
-        setStatus(error.message, 'error');
-      }
-
-      try {
-        await loadRecordsLog();
-      } catch (error) {
-        el.recordsTableBody.innerHTML = `
-          <tr>
-            <td colspan="7" class="small">${escapeHtml(error.message)}</td>
-          </tr>
-        `;
-      }
-    }
+  try {
+    await loadRecordsLog();
+  } catch (error) {
+    el.recordsTableBody.innerHTML = `
+      <tr>
+        <td colspan="7" class="small">${escapeHtml(error.message)}</td>
+      </tr>
+    `;
+  }
+}
 
     init();
   </script>
