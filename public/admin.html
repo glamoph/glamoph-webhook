@@ -496,6 +496,20 @@
           <p class="panel-subtitle">Generate a public archive record and push <span class="mono">data.json</span> directly to GitHub Pages.</p>
 
           <form id="publishForm" class="field-grid" autocomplete="off">
+            <div class="field-row-2">
+  <div class="field">
+    <label for="loadOrderId">Order ID</label>
+    <input id="loadOrderId" type="text" placeholder="6102850404436" />
+    <div class="hint">Enter Shopify numeric order ID, then load the artwork fields automatically.</div>
+  </div>
+
+  <div class="field" style="align-content:end;">
+    <label>&nbsp;</label>
+    <button class="button" type="button" id="loadOrderBtn">Load Order</button>
+  </div>
+</div>
+
+<div class="status" id="orderLoadStatus"></div>
             <div class="field">
   <label for="artworkCode">Artwork Code</label>
   <input id="artworkCode" name="artworkCode" type="text" placeholder="AMFW" required />
