@@ -278,8 +278,8 @@ function buildCollectorEmailHtml(record) {
           <tr>
             <td style="padding:0 0 18px;">
               <div style="font-family:'Cormorant Garamond', Georgia, serif;font-size:48px;line-height:0.96;font-weight:300;color:#141414;">
-                ${title}
-              </div>
+  <span translate="no">${title}</span>
+</div>
             </td>
           </tr>
 
