@@ -903,7 +903,7 @@ title: document.getElementById('title'),
       renderPreview(buildPreviewDraft());
     }
 
-    async function loadOrderDetail() {
+        async function loadOrderDetail() {
       const orderId = String(el.loadOrderId.value || '').trim();
 
       if (!orderId) {
@@ -927,10 +927,6 @@ title: document.getElementById('title'),
         el.orderLoadStatus.textContent = error.message;
         el.orderLoadStatus.className = 'status error';
       }
-    }
-      
-      el.jsonOutput.textContent = JSON.stringify(result.record, null, 2);
-      renderResultMeta(result);
     }
 
     function collectPayload() {
