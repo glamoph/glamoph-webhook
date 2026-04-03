@@ -1018,12 +1018,9 @@ async function processOrderWebhook(order) {
       customerEmail,
       customerFirstName,
       customerLastName,
-      customerEmail,
-customerFirstName,
-customerLastName,
-locale: String(order?.customer_locale || order?.locale || "").trim().toLowerCase(),
-shippingCountryCode: String(order?.shipping_address?.country_code || "").trim().toUpperCase(),
-billingCountryCode: String(order?.billing_address?.country_code || "").trim().toUpperCase(),
+      locale: String(order?.customer_locale || order?.locale || "").trim().toLowerCase(),
+      shippingCountryCode: String(order?.shipping_address?.country_code || "").trim().toUpperCase(),
+      billingCountryCode: String(order?.billing_address?.country_code || "").trim().toUpperCase(),
     };
 
     await createRecordFile(internalId, record);
