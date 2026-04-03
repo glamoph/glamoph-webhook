@@ -769,7 +769,8 @@ title: document.getElementById('title'),
       const size = normalizeSize(el.size.value);
       const editionNumber = Number(el.editionNumber.value || 1);
       const title = el.title.value.trim() || 'Untitled';
-      const image = el.image.value.trim() || (artworkCode ? `/images/${artworkCode}.jpg` : '');
+      const sku = el.sku.value.trim();
+const image = el.image.value.trim() || (sku ? `/images/${sku}.jpg` : (artworkCode ? `/images/${artworkCode}.jpg` : ''));
       const sizeMeta = SIZE_MAP[size] || SIZE_MAP.L;
       const artworkId = artworkCode ? createSlug(artworkCode, size, editionNumber) : 'GLA-XXXX-X-000';
       const archiveUrl = artworkCode ? `${archiveBaseUrl()}/${artworkId}` : '—';
