@@ -943,18 +943,19 @@ title: document.getElementById('title'),
       el.openArchiveBtn.addEventListener('click', openArchive);
 
       [
-        el.artworkCode,
-        el.size,
-        el.editionNumber,
-        el.title,
-        el.image,
-        el.artist,
-        el.frame,
-        el.medium
-      ].forEach((node) => {
-        node.addEventListener('input', onFieldInput);
-        node.addEventListener('change', onFieldInput);
-      });
+  el.artworkCode,
+  el.sku,
+  el.size,
+  el.editionNumber,
+  el.title,
+  el.image,
+  el.artist,
+  el.frame,
+  el.medium
+].forEach((node) => {
+  node.addEventListener('input', onFieldInput);
+  node.addEventListener('change', onFieldInput);
+});
 
       if (el.resendBtn) {
         el.resendBtn.addEventListener('click', async () => {
