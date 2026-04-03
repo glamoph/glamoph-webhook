@@ -724,38 +724,11 @@ title: document.getElementById('title'),
       resendAdminToken: document.getElementById('resendAdminToken'),
       resendStatus: document.getElementById('resendStatus')
     };
-<script>
-const el = {
-  publishForm: document.getElementById('publishForm'),
-  copyJsonBtn: document.getElementById('copyJsonBtn'),
-  openArchiveBtn: document.getElementById('openArchiveBtn'),
-
-  artworkCode: document.getElementById('artworkCode'),
-  sku: document.getElementById('sku'),
-  size: document.getElementById('size'),
-  editionNumber: document.getElementById('editionNumber'),
-  title: document.getElementById('title'),
-  image: document.getElementById('image'),
-  artist: document.getElementById('artist'),
-  frame: document.getElementById('frame'),
-  medium: document.getElementById('medium'),
-
-  preview: document.getElementById('preview'),
-  result: document.getElementById('result'),
-
-  // NEW
-  orderId: document.getElementById('orderId'),
-  loadOrderBtn: document.getElementById('loadOrderBtn'),
-  orderLoadStatus: document.getElementById('orderLoadStatus')
-};
 
     function setStatus(message, type = '') {
       el.status.className = 'status' + (type ? ' ' + type : '');
       el.status.textContent = message || '';
     }
-// =============================
-// Helpers
-// =============================
 
     function escapeHtml(value) {
       return String(value ?? '')
@@ -765,16 +738,10 @@ const el = {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
     }
-function pad2(n) {
-  return String(n).padStart(2, '0');
-}
 
     function normalizeArtworkCode(value) {
       return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
     }
-function pad3(n) {
-  return String(n).padStart(3, '0');
-}
 
     function normalizeSize(value) {
       const raw = String(value || '').trim().toUpperCase();
@@ -782,10 +749,8 @@ function pad3(n) {
     }
     
     function extractArtworkCodeFromSku(sku) {
-function extractArtworkCodeFromSku(sku) {
   if (!sku) return '';
   const parts = sku.split('-');
-  const parts = String(sku).trim().toUpperCase().split('-');
   return parts[1] || '';
 }
     
@@ -796,26 +761,14 @@ function extractArtworkCodeFromSku(sku) {
     function pad2(value) {
       return String(value).padStart(2, '0');
     }
-function extractSizeFromSku(sku) {
-  if (!sku) return '';
-  const parts = String(sku).trim().toUpperCase().split('-');
-  return parts[2] || '';
-}
 
     function createSlug(code, size, editionNumber) {
       return `GLA-${code}-${size}-${pad3(editionNumber)}`;
     }
-// =============================
-// Preview
-// =============================
 
     function archiveBaseUrl() {
       return 'https://verify.glamoph.com';
     }
-function buildPreviewDraft() {
-  const artworkCode = el.artworkCode.value || '';
-  const size = el.size.value || 'S';
-  const edition = Number(el.editionNumber.value || 1);
 
     function buildPreviewDraft() {
   const artworkCode = normalizeArtworkCode(el.artworkCode.value);
@@ -827,15 +780,10 @@ function buildPreviewDraft() {
   const sizeMeta = SIZE_MAP[size] || SIZE_MAP.L;
   const artworkId = artworkCode ? createSlug(artworkCode, size, editionNumber) : 'GLA-XXXX-X-000';
   const archiveUrl = artworkCode ? `${archiveBaseUrl()}/${artworkId}` : '—';
-  const editionMap = { S: 50, M: 30, L: 10 };
-  const total = editionMap[size] || 50;
-
-  const artworkId = `GLA-${artworkCode}-${size}-${pad3(edition)}`;
 
   return {
     verified: 'Artwork Verified',
     title,
-    title: el.title.value,
     artworkId,
     edition: `Edition ${pad2(editionNumber)} / ${sizeMeta.total}`,
     artist: el.artist.value.trim() || 'GLAMOPH',
@@ -844,8 +792,6 @@ function buildPreviewDraft() {
     medium: el.medium.value.trim() || 'Archival pigment print on fine art paper',
     archiveUrl,
     image
-    edition: `Edition ${pad2(edition)} / ${total}`,
-    image: el.image.value
   };
 }
 
@@ -899,10 +845,6 @@ function buildPreviewDraft() {
         ['Archive URL', record && record.archiveUrl ? `<a href="${escapeHtml(record.archiveUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(record.archiveUrl)}</a>` : '—'],
         ['Commit SHA', github && github.commitSha ? `<span class="mono">${escapeHtml(github.commitSha)}</span>` : '—']
       ];
-function renderPreview(data) {
-  if (!el.preview) return;
-  el.preview.textContent = JSON.stringify(data, null, 2);
-}
 
       el.resultMeta.innerHTML = rows.map(([k, v]) => `
         <div class="kv-item">
@@ -911,9 +853,6 @@ function renderPreview(data) {
         </div>
       `).join('');
     }
-// =============================
-// Apply Draft
-// =============================
 
     function renderJsonOutput(result) {
       if (!result) {
@@ -921,8 +860,6 @@ function renderPreview(data) {
         renderResultMeta(null);
         return;
       }
-function applyOrderDraftToForm(draft) {
-  if (!draft) return;
 
       el.jsonOutput.textContent = JSON.stringify(result.record, null, 2);
       renderResultMeta(result);
@@ -939,99 +876,48 @@ function applyOrderDraftToForm(draft) {
   frame: el.frame.value.trim(),
   medium: el.medium.value.trim()
 };
-  el.sku.value = draft.sku || '';
-  el.artworkCode.value = draft.artworkCode || '';
-  el.title.value = draft.title || '';
-  el.size.value = draft.size || '';
-  el.image.value = draft.image || '';
-  el.artist.value = draft.artist || 'GLAMOPH';
-  el.frame.value = draft.frame || 'Black';
-  el.medium.value = draft.medium || 'Archival pigment print on fine art paper';
 
       const edition = el.editionNumber.value.trim();
       if (edition !== '') {
         payload.editionNumber = Number(edition);
       }
-  renderPreview(buildPreviewDraft());
-}
 
       Object.keys(payload).forEach((key) => {
         if (payload[key] === '') delete payload[key];
       });
-// =============================
-// Load Order
-// =============================
 
       return payload;
     }
-async function loadOrderDetail() {
-  const orderId = String(el.orderId.value || '').trim();
 
     async function publishRecord(event) {
       event.preventDefault();
-  if (!orderId) {
-    el.orderLoadStatus.textContent = 'Please enter Order ID';
-    el.orderLoadStatus.className = 'status error';
-    return;
-  }
 
       const payload = collectPayload();
-  el.orderLoadStatus.textContent = 'Loading...';
 
       if (!payload.artworkCode) {
         setStatus('Artwork Code is required.', 'error');
         return;
       }
-  try {
-    const res = await fetch(`/admin/order-detail?orderId=${orderId}`);
-    const data = await res.json();
 
       if (!payload.title) {
         setStatus('Title is required.', 'error');
         return;
       }
-    if (!data.ok) throw new Error(data.error);
 
       try {
         setBusy(true);
         setStatus('Publishing to GitHub…');
-    applyOrderDraftToForm(data.draft);
 
         const result = await fetchJson('/api/publish', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-    el.orderLoadStatus.textContent = 'Loaded successfully';
-    el.orderLoadStatus.className = 'status success';
-  } catch (err) {
-    el.orderLoadStatus.textContent = err.message;
-    el.orderLoadStatus.className = 'status error';
-  }
-}
 
         state.latestResult = result;
         state.lastArchiveUrl = result.record && result.record.archiveUrl ? result.record.archiveUrl : '';
         renderJsonOutput(result);
         renderPreview(result.record || buildPreviewDraft());
-// =============================
-// Publish
-// =============================
-
-async function publishRecord(e) {
-  e.preventDefault();
-
-  const payload = {
-    artworkCode: el.artworkCode.value,
-    sku: el.sku.value,
-    size: el.size.value,
-    editionNumber: el.editionNumber.value,
-    title: el.title.value,
-    image: el.image.value,
-    artist: el.artist.value,
-    frame: el.frame.value,
-    medium: el.medium.value
-  };
 
         setStatus(`Published ${result.record.artworkId} successfully.`, 'success');
       } catch (error) {
@@ -1040,11 +926,6 @@ async function publishRecord(e) {
         setBusy(false);
       }
     }
-  const res = await fetch('/api/publish', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
 
     async function copyJson() {
       if (!state.latestResult || !state.latestResult.record) return;
@@ -1052,118 +933,85 @@ async function publishRecord(e) {
       await navigator.clipboard.writeText(text);
       setStatus('JSON copied.', 'success');
     }
-  const data = await res.json();
 
     function openArchive() {
       if (!state.lastArchiveUrl) return;
       window.open(state.lastArchiveUrl, '_blank', 'noopener,noreferrer');
     }
-  el.result.textContent = JSON.stringify(data, null, 2);
-}
 
     function onFieldInput() {
       renderPreview(buildPreviewDraft());
     }
-// =============================
-// Events
-// =============================
 
     function bindEvents() {
-function bindEvents() {
-  el.publishForm.addEventListener('submit', publishRecord);
-  el.copyJsonBtn.addEventListener('click', copyJson);
-  el.openArchiveBtn.addEventListener('click', openArchive);
+      el.publishForm.addEventListener('submit', publishRecord);
+      el.copyJsonBtn.addEventListener('click', copyJson);
+      el.openArchiveBtn.addEventListener('click', openArchive);
 
-  [
-    el.artworkCode,
-@@ -959,80 +172,37 @@ <h2 class="panel-title" style="margin-bottom:4px;">Last Publish Result</h2>
-    el.frame,
-    el.medium
-  ].forEach((node) => {
-    if (!node) return; // ← 安全対策（これ重要）
-    node.addEventListener('input', onFieldInput);
-    node.addEventListener('change', onFieldInput);
-    if (!node) return;
-    node.addEventListener('input', () => {
-      renderPreview(buildPreviewDraft());
-    });
-  });
+      [
+  el.artworkCode,
+  el.sku,
+  el.size,
+  el.editionNumber,
+  el.title,
+  el.image,
+  el.artist,
+  el.frame,
+  el.medium
+].forEach((node) => {
+  node.addEventListener('input', onFieldInput);
+  node.addEventListener('change', onFieldInput);
+});
 
-  if (el.resendBtn) {
-    el.resendBtn.addEventListener('click', async () => {
-      const orderId = String(el.resendOrderId.value || '').trim();
-      const token = String(el.resendAdminToken.value || '').trim();
+      if (el.resendBtn) {
+        el.resendBtn.addEventListener('click', async () => {
+          const orderId = String(el.resendOrderId.value || '').trim();
+          const token = String(el.resendAdminToken.value || '').trim();
 
-      if (!orderId) {
-        el.resendStatus.textContent = 'Missing orderId';
-        el.resendStatus.className = 'status error';
-        return;
-      }
+          if (!orderId) {
+            el.resendStatus.textContent = 'Missing orderId';
+            el.resendStatus.className = 'status error';
+            return;
+          }
 
-      if (!token) {
-        el.resendStatus.textContent = 'Missing admin token';
-        el.resendStatus.className = 'status error';
-        return;
-      }
+          if (!token) {
+            el.resendStatus.textContent = 'Missing admin token';
+            el.resendStatus.className = 'status error';
+            return;
+          }
 
-      el.resendBtn.disabled = true;
-      el.resendStatus.textContent = 'Sending...';
-      el.resendStatus.className = 'status';
+          el.resendBtn.disabled = true;
+          el.resendStatus.textContent = 'Sending...';
+          el.resendStatus.className = 'status';
 
-      try {
-        const res = await fetch('https://verify.glamoph.com/admin/resend-collector-access', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-admin-token': token
-          },
-          body: JSON.stringify({ orderId })
+          try {
+            const res = await fetch('https://verify.glamoph.com/admin/resend-collector-access', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-admin-token': token
+              },
+              body: JSON.stringify({ orderId })
+            });
+
+            const data = await res.json();
+
+            if (data.ok) {
+              el.resendStatus.textContent = 'Collector access sent successfully.';
+              el.resendStatus.className = 'status success';
+            } else {
+              el.resendStatus.textContent = data.error || 'Failed';
+              el.resendStatus.className = 'status error';
+            }
+          } catch (err) {
+            el.resendStatus.textContent = err.message;
+            el.resendStatus.className = 'status error';
+          } finally {
+            el.resendBtn.disabled = false;
+          }
         });
-
-        const data = await res.json();
-  if (el.loadOrderBtn) {
-    el.loadOrderBtn.addEventListener('click', loadOrderDetail);
-  }
-
-        if (data.ok) {
-          el.resendStatus.textContent = 'Collector access sent successfully.';
-          el.resendStatus.className = 'status success';
-        } else {
-          el.resendStatus.textContent = data.error || 'Failed';
-          el.resendStatus.className = 'status error';
-        }
-      } catch (err) {
-        el.resendStatus.textContent = err.message;
-        el.resendStatus.className = 'status error';
-      } finally {
-        el.resendBtn.disabled = false;
-  if (el.orderId) {
-    el.orderId.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        loadOrderDetail();
       }
-    });
-  }
-
-  /* ▼▼▼ここに追加▼▼▼ */
-  if (el.sku) {
-    el.sku.addEventListener('input', () => {
-      const code = extractArtworkCodeFromSku(el.sku.value);
-      if (code) {
-        el.artworkCode.value = code;
-        renderPreview(buildPreviewDraft());
-      }
-      const size = extractSizeFromSku(el.sku.value);
-
-      if (code) el.artworkCode.value = code;
-      if (size && !el.size.value) el.size.value = size;
-
-      renderPreview(buildPreviewDraft());
-    });
-  }
-  /* ▲▲▲ここまで▲▲▲ */
-}
+    }
 
     function init() {
       bindEvents();
@@ -1175,5 +1023,3 @@ function bindEvents() {
   </script>
 </body>
 </html>
-bindEvents();
-</script>
