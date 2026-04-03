@@ -1051,7 +1051,7 @@ async function processOrderWebhook(order) {
       createdAt,
       updatedAt: new Date().toISOString(),
       ownerToken,
-      customerEmail,
+            customerEmail,
       customerFirstName,
       customerLastName,
       locale: String(order?.customer_locale || order?.locale || "").trim().toLowerCase(),
