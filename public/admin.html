@@ -8,7 +8,6 @@
     :root {
       --bg: #f4f1ea;
       --panel: rgba(255, 255, 255, 0.72);
-      --panel-strong: rgba(255, 255, 255, 0.88);
       --text: #131313;
       --muted: #6f6a63;
       --line: rgba(19, 19, 19, 0.12);
@@ -19,16 +18,13 @@
       --shadow: 0 18px 60px rgba(0, 0, 0, 0.06);
       --radius-xl: 28px;
       --radius-lg: 20px;
-      --radius-md: 14px;
       --container: 1240px;
       --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
       --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
       --serif: "Cormorant Garamond", "Times New Roman", serif;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     html, body {
       margin: 0;
@@ -40,9 +36,7 @@
       text-rendering: optimizeLegibility;
     }
 
-    body {
-      min-height: 100vh;
-    }
+    body { min-height: 100vh; }
 
     .shell {
       width: min(calc(100% - 32px), var(--container));
@@ -111,9 +105,7 @@
       -webkit-backdrop-filter: blur(18px);
     }
 
-    .panel-inner {
-      padding: 24px;
-    }
+    .panel-inner { padding: 24px; }
 
     .panel-title {
       margin: 0 0 6px;
@@ -158,9 +150,7 @@
       text-transform: uppercase;
     }
 
-    input, select, textarea, button {
-      font: inherit;
-    }
+    input, select, textarea, button { font: inherit; }
 
     input, select, textarea {
       width: 100%;
@@ -171,7 +161,7 @@
       background: rgba(255,255,255,0.86);
       color: var(--text);
       outline: none;
-      transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+      transition: border-color 0.18s ease, background 0.18s ease;
     }
 
     textarea {
@@ -243,13 +233,8 @@
       color: var(--muted);
     }
 
-    .status.success {
-      color: var(--success);
-    }
-
-    .status.error {
-      color: var(--error);
-    }
+    .status.success { color: var(--success); }
+    .status.error { color: var(--error); }
 
     .stack {
       display: grid;
@@ -848,14 +833,12 @@
         ['Commit SHA', github && github.commitSha ? `<span class="mono">${escapeHtml(github.commitSha)}</span>` : '—']
       ];
 
-      el.resultMeta.innerHTML = rows.map(([k, v]) => {
-        return `
-          <div class="kv-item">
-            <div class="kv-k">${k}</div>
-            <div class="kv-v">${v}</div>
-          </div>
-        `;
-      }).join('');
+      el.resultMeta.innerHTML = rows.map(([k, v]) => `
+        <div class="kv-item">
+          <div class="kv-k">${k}</div>
+          <div class="kv-v">${v}</div>
+        </div>
+      `).join('');
     }
 
     function renderJsonOutput(result) {
@@ -886,9 +869,7 @@
       }
 
       Object.keys(payload).forEach((key) => {
-        if (payload[key] === '') {
-          delete payload[key];
-        }
+        if (payload[key] === '') delete payload[key];
       });
 
       return payload;
@@ -915,9 +896,7 @@
 
         const result = await fetchJson('/api/publish', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
 
