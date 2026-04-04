@@ -379,6 +379,9 @@ function resolveEmailLocale(record) {
   return "en";
 }
 
+// ==========================
+// SUBJECT
+// ==========================
 function buildCollectorEmailSubject(record) {
   const locale = resolveEmailLocale(record);
 
@@ -389,6 +392,10 @@ function buildCollectorEmailSubject(record) {
   return `Your GLAMOPH Certificate is Ready`;
 }
 
+
+// ==========================
+// HTML
+// ==========================
 function buildCollectorEmailHtml(record) {
   const locale = resolveEmailLocale(record);
   const isJa = locale === "ja";
@@ -398,6 +405,9 @@ function buildCollectorEmailHtml(record) {
   const edition = escapeHtml(record.edition || "");
   const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
 
+  // ★ ロゴURL（ここ重要）
+  const logoUrl = "https://verify.glamoph.com/assets/email/logo.png";
+
   if (isJa) {
     return `<!DOCTYPE html>
 <html lang="ja">
@@ -405,48 +415,68 @@ function buildCollectorEmailHtml(record) {
   <meta charset="UTF-8" />
   <meta name="google" content="notranslate" />
 </head>
-<body style="margin:0;padding:0;background:#f4f1ea;color:#141414;font-family:Arial,Helvetica,sans-serif;">
-  <table width="100%" style="max-width:640px;margin:auto;padding:40px 20px;">
+<body style="margin:0;padding:0;background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:auto;padding:40px 20px;">
 
+    <!-- LOGO -->
     <tr>
-      <td style="font-size:11px;letter-spacing:0.16em;color:#6b665f;padding-bottom:20px;">
-        GLAMOPH
+      <td style="padding-bottom:40px;">
+        <img src="${logoUrl}" width="120" style="display:block;border:0;" />
       </td>
     </tr>
 
+    <!-- IMAGE -->
+    ${
+      imageUrl
+        ? `<tr>
+            <td style="padding-bottom:32px;">
+              <img src="${imageUrl}" style="width:100%;display:block;border:0;" />
+            </td>
+          </tr>`
+        : ""
+    }
+
+    <!-- TEXT -->
     <tr>
-      <td style="font-size:14px;line-height:1.9;padding-bottom:28px;">
+      <td style="font-size:14px;line-height:1.9;padding-bottom:20px;">
         この作品はアーカイブされました。<br />
         コレクターアクセスが付与されました。
       </td>
     </tr>
 
-    ${
-      imageUrl
-        ? `<tr><td style="padding-bottom:28px;">
-            <img src="${imageUrl}" style="width:100%;" />
-          </td></tr>`
-        : ""
-    }
-
+    <!-- CTA TEXT -->
     <tr>
       <td style="font-size:13px;padding-bottom:14px;">
         あなたのコレクターレコードはこちらからご確認いただけます。
       </td>
     </tr>
 
+    <!-- CTA BUTTON -->
     <tr>
-      <td style="padding-bottom:24px;">
-        <a href="${ownerUrl}" style="padding:14px 22px;background:#141414;color:#fff;text-decoration:none;font-size:11px;">
-          VIEW CERTIFICATE
+      <td style="padding-bottom:28px;">
+        <a href="${ownerUrl}" target="_blank"
+          style="
+            display:inline-block;
+            padding:16px 24px;
+            background:#ffffff;
+            color:#000000;
+            text-decoration:none;
+            font-size:13px;
+            letter-spacing:0.06em;
+            min-width:220px;
+            text-align:center;
+            border:1px solid #dddddd;
+          ">
+          証明書を表示する
         </a>
       </td>
     </tr>
 
+    <!-- META -->
     <tr>
-      <td style="font-size:10px;color:#6b665f;">
-        Artwork ID: ${publicId}<br/>
-        Edition: ${edition}
+      <td style="font-size:10px;color:#666666;">
+        ${publicId}<br/>
+        ${edition}
       </td>
     </tr>
 
@@ -455,53 +485,76 @@ function buildCollectorEmailHtml(record) {
 </html>`;
   }
 
+  // ==========================
+  // ENGLISH VERSION
+  // ==========================
   return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8" />
 </head>
-<body style="margin:0;padding:0;background:#f4f1ea;color:#141414;font-family:Arial,Helvetica,sans-serif;">
-  <table width="100%" style="max-width:640px;margin:auto;padding:40px 20px;">
+<body style="margin:0;padding:0;background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:auto;padding:40px 20px;">
 
+    <!-- LOGO -->
     <tr>
-      <td style="font-size:11px;letter-spacing:0.16em;color:#6b665f;padding-bottom:20px;">
-        GLAMOPH
+      <td style="padding-bottom:40px;">
+        <img src="${logoUrl}" width="120" style="display:block;border:0;" />
       </td>
     </tr>
 
+    <!-- IMAGE -->
+    ${
+      imageUrl
+        ? `<tr>
+            <td style="padding-bottom:32px;">
+              <img src="${imageUrl}" style="width:100%;display:block;border:0;" />
+            </td>
+          </tr>`
+        : ""
+    }
+
+    <!-- TEXT -->
     <tr>
-      <td style="font-size:14px;line-height:1.9;padding-bottom:28px;">
+      <td style="font-size:14px;line-height:1.9;padding-bottom:20px;">
         This artwork has been officially archived.<br />
         Collector access has been granted.
       </td>
     </tr>
 
-    ${
-      imageUrl
-        ? `<tr><td style="padding-bottom:28px;">
-            <img src="${imageUrl}" style="width:100%;" />
-          </td></tr>`
-        : ""
-    }
-
+    <!-- CTA TEXT -->
     <tr>
       <td style="font-size:13px;padding-bottom:14px;">
         Access your private collector record below.
       </td>
     </tr>
 
+    <!-- CTA BUTTON -->
     <tr>
-      <td style="padding-bottom:24px;">
-        <a href="${ownerUrl}" style="padding:14px 22px;background:#141414;color:#fff;text-decoration:none;font-size:11px;">
+      <td style="padding-bottom:28px;">
+        <a href="${ownerUrl}" target="_blank"
+          style="
+            display:inline-block;
+            padding:16px 24px;
+            background:#ffffff;
+            color:#000000;
+            text-decoration:none;
+            font-size:13px;
+            letter-spacing:0.06em;
+            min-width:220px;
+            text-align:center;
+            border:1px solid #dddddd;
+          ">
           VIEW CERTIFICATE
         </a>
       </td>
     </tr>
 
+    <!-- META -->
     <tr>
-      <td style="font-size:10px;color:#6b665f;">
-        Artwork ID: ${publicId}<br/>
-        Edition: ${edition}
+      <td style="font-size:10px;color:#666666;">
+        ${publicId}<br/>
+        ${edition}
       </td>
     </tr>
 
@@ -510,6 +563,10 @@ function buildCollectorEmailHtml(record) {
 </html>`;
 }
 
+
+// ==========================
+// TEXT VERSION
+// ==========================
 function buildCollectorEmailText(record) {
   const locale = resolveEmailLocale(record);
   const isJa = locale === "ja";
@@ -525,8 +582,8 @@ function buildCollectorEmailText(record) {
       "この作品はアーカイブされました。",
       "コレクターアクセスが付与されました。",
       "",
-      `Artwork ID: ${publicId}`,
-      `Edition: ${edition}`,
+      publicId,
+      edition,
       "",
       "あなたのコレクターレコードはこちらからご確認いただけます。",
       ownerUrl,
@@ -539,8 +596,8 @@ function buildCollectorEmailText(record) {
     "This artwork has been officially archived.",
     "Collector access has been granted.",
     "",
-    `Artwork ID: ${publicId}`,
-    `Edition: ${edition}`,
+    publicId,
+    edition,
     "",
     "Access your private collector record below.",
     ownerUrl,
