@@ -420,9 +420,9 @@ function buildCollectorEmailHtml(record) {
 
     <!-- LOGO -->
     <tr>
-      <td style="padding-bottom:40px;">
-        <img src="${logoUrl}" width="120" style="display:block;border:0;" />
-      </td>
+      <td align="center" style="padding-bottom:40px;">
+  <img src="${logoUrl}" width="120" style="display:block;border:0;margin:auto;" />
+</td>
     </tr>
 
     <!-- IMAGE -->
