@@ -439,15 +439,15 @@ function buildCollectorEmailHtml(record) {
     <!-- TEXT -->
     <tr>
       <td style="font-size:14px;line-height:1.9;padding-bottom:20px;">
-        この作品はアーカイブされました。<br />
-        コレクターアクセスが付与されました。
+        この作品は、正式にアーカイブされました。<br />
+        その記録へのアクセスが開かれています。
       </td>
     </tr>
 
     <!-- CTA TEXT -->
     <tr>
       <td style="font-size:13px;padding-bottom:14px;">
-        あなたのコレクターレコードはこちらからご確認いただけます。
+        コレクターレコードはこちらからご覧いただけます。
       </td>
     </tr>
 
@@ -467,7 +467,7 @@ function buildCollectorEmailHtml(record) {
             text-align:center;
             border:1px solid #dddddd;
           ">
-          証明書を表示する
+          証明書を表示
         </a>
       </td>
     </tr>
