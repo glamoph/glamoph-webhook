@@ -205,8 +205,6 @@ function resolveRecordImageUrl(value) {
 }
 
 function buildPageHtml(record, recordId, options = {}) {
-  const { isOwner } = options;
-
   const imageUrl = resolveRecordImageUrl(record.image || "");
   const safeTitle = escapeHtml(record.title || "Untitled");
   const safeVerified = escapeHtml(record.verified || "Artwork Verified");
@@ -218,8 +216,6 @@ function buildPageHtml(record, recordId, options = {}) {
   const safeFrame = escapeHtml(record.frame || "");
   const safeArchiveDate = escapeHtml(record.archiveDate || "");
   const safeArchiveUrl = `${VERIFY_PUBLIC_BASE_URL}/${recordId}`;
-  const collectorName = getCollectorName(record);
-  const safeCollectorName = escapeHtml(collectorName);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -231,28 +227,6 @@ function buildPageHtml(record, recordId, options = {}) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/archive.css" />
-  <style>
-    .archive-collector-mark {
-      display: flex;
-      gap: 10px;
-      align-items: baseline;
-      margin-top: 14px;
-      color: #6b665f;
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    .archive-collector-label {
-      opacity: 0.72;
-    }
-
-    .archive-collector-name {
-      color: #141414;
-      letter-spacing: 0.04em;
-      text-transform: none;
-    }
-  </style>
 </head>
 <body>
   <main class="archive-page">
@@ -261,7 +235,6 @@ function buildPageHtml(record, recordId, options = {}) {
       <header class="archive-header">
         <div class="archive-status-line">
           <span class="archive-status">${safeVerified}</span>
-          ${isOwner ? `<span class="archive-status-divider">/</span><span class="archive-owner">Authenticated Holder</span>` : ""}
         </div>
       </header>
 
@@ -272,17 +245,8 @@ function buildPageHtml(record, recordId, options = {}) {
           <div class="archive-meta-line">
             <span class="archive-meta-id">${safeArtworkId}</span>
             <span class="archive-meta-divider">/</span>
-            <span class="archive-meta-edition" title="Edition number">${safeEdition}</span>
+            <span class="archive-meta-edition">${safeEdition}</span>
           </div>
-
-          ${
-            isOwner && safeCollectorName
-              ? `<div class="archive-collector-mark">
-                   <span class="archive-collector-label">Recorded for</span>
-                   <span class="archive-collector-name">${safeCollectorName}</span>
-                 </div>`
-              : ""
-          }
         </div>
 
         <figure class="archive-artwork">
@@ -335,15 +299,6 @@ function buildPageHtml(record, recordId, options = {}) {
               <dt>Archive URL</dt>
               <dd><a href="${safeArchiveUrl}" target="_blank" rel="noopener noreferrer">${safeArchiveUrl}</a></dd>
             </div>
-
-            ${
-              isOwner && safeCollectorName
-                ? `<div class="archive-record__row archive-record__row--collector">
-                     <dt>Recorded for</dt>
-                     <dd>${safeCollectorName}</dd>
-                   </div>`
-                : ""
-            }
           </dl>
         </div>
       </section>
