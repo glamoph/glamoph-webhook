@@ -234,6 +234,7 @@ function buildPageHtml(record, recordId, options = {}) {
     display: flex !important;
     flex-direction: column !important;
     align-items: flex-end !important;
+    padding-right: 8px!important;
   }
 
   .archive-status-line {
