@@ -256,6 +256,13 @@ function buildPageHtml(record, recordId, options = {}) {
   color: rgba(20, 20, 20, 0.52) !important;
   }
 
+  .archive-meta-line {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  }
+
   @media (max-width: 768px) {
     .archive-header {
     align-items: flex-start !important;
