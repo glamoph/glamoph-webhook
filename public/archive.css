@@ -109,7 +109,9 @@ button {
 }
 
 .archive-status-line {
-  display: flex;
+  display: block;
+  width: 100%;
+  text-align: right;
   justify-content: flex-end;
   align-items: center;
   gap: 10px;
@@ -121,6 +123,20 @@ button {
 
   color: rgba(20, 20, 20, 0.45);
 }
+
+.archive-owner-whisper {
+  display: block !important;
+  width: 100% !important;
+  margin-top: 2px !important;
+  text-align: right !important;
+  font-family: "Cormorant Garamond", serif !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.03em !important;
+  color: rgba(20, 20, 20, 0.52) !important;
+  }
+
 .archive-status {
   margin: 0;
   font-size: 11px;
@@ -177,7 +193,7 @@ button {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 12px;
   padding-top: 4px;
 }
 
@@ -500,6 +516,7 @@ html.is-printing .archive-download {
     width: 100% !important;
     margin: 0 0 20px 0 !important;
     text-align: left !important;
+    align-items: flex-start !important;
   }
 
   .archive-status-line {
@@ -525,6 +542,10 @@ html.is-printing .archive-download {
     justify-content: flex-start !important;
     align-items: flex-start !important;
   }
+  .archive-owner-whisper {
+     width: auto !important;
+     text-align: left !important;
+    }
 }
 
 @page {
