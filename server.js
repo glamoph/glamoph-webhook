@@ -230,22 +230,38 @@ function buildPageHtml(record, recordId, options = {}) {
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/archive.css" />
   <style>
-    .archive-owner-whisper {
-  margin-top: 6px;
-  font-family: "Courier New", monospace;
-  font-size: 16px;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  color: rgba(20, 20, 20, 0.6);
-}
+  .archive-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
 
-    @media (max-width: 768px) {
-      .archive-owner-whisper {
-        margin-top: 8px;
-        font-size: 16px;
-      }
+  .archive-status-line {
+    display: block;
+    width: 100%;
+    text-align: right;
+  }
+
+  .archive-owner-whisper {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    text-align: right;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    color: rgba(20, 20, 20, 0.6);
+  }
+
+  @media (max-width: 768px) {
+    .archive-owner-whisper {
+      margin-top: 5px;
+      font-size: 15px;
     }
-  </style>
+  }
+</style>
 </head>
 <body>
   <main class="archive-page">
