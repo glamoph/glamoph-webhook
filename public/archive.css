@@ -224,7 +224,7 @@ button {
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.005em;
-  color: var(--muted);
+  color: rgba(20, 20, 20, 0.58);
 }
 
 .archive-meta-value {
@@ -232,7 +232,7 @@ button {
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.005em;
-  color: var(--muted);
+  color: rgba(20, 20, 20, 0.58);
 }
 
 .archive-meta-divider {
@@ -316,7 +316,7 @@ button {
   font-weight: 600;
   letter-spacing: 0.01em;
   line-height: 1.6;
-  color: var(--muted);
+  color: rgba(20, 20, 20, 0.58);
   overflow-wrap: anywhere;
   word-break: break-word;
 }
