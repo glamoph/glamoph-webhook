@@ -229,55 +229,6 @@ function buildPageHtml(record, recordId, options = {}) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/archive.css" />
-  <style>
-  .archive-header {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-end !important;
-    padding-right: 8px!important;
-  }
-
-  .archive-status-line {
-    display: block !important;
-    width: 100% !important;
-    text-align: right !important;
-  }
-
-  .archive-owner-whisper {
-  display: block !important;
-  width: 100% !important;
-  margin-top: 2px !important;
-  text-align: right !important;
-  font-family: "Cormorant Garamond", serif !important;
-  font-size: 14px !important;
-  font-weight: 400 !important;
-  line-height: 1 !important;
-  letter-spacing: 0.03em !important;
-  color: rgba(20, 20, 20, 0.52) !important;
-  }
-
-  .archive-meta-line {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  }
-
-  @media (max-width: 768px) {
-    .archive-header {
-    align-items: flex-start !important;
-  }
-
-  .archive-status-line {
-    width: auto !important;
-    text-align: left !important;
-  }
-    .archive-owner-whisper {
-     width: auto !important;
-     text-align: left !important;
-    }
-  }
-</style>
 </head>
 <body>
   <main class="archive-page">
