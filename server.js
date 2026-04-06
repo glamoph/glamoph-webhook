@@ -231,14 +231,13 @@ function buildPageHtml(record, recordId, options = {}) {
   <link rel="stylesheet" href="/archive.css" />
   <style>
     .archive-owner-whisper {
-      margin-top: 10px;
-      font-family: "Cormorant Garamond", serif;
-      font-size: 18px;
-      font-weight: 400;
-      letter-spacing: 0.04em;
-      line-height: 1;
-      color: rgba(20, 20, 20, 0.72);
-    }
+  margin-top: 6px;
+  font-family: "Courier New", monospace;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: rgba(20, 20, 20, 0.6);
+}
 
     @media (max-width: 768px) {
       .archive-owner-whisper {
@@ -253,11 +252,12 @@ function buildPageHtml(record, recordId, options = {}) {
     <section class="archive-shell">
 
       <header class="archive-header">
-        <div class="archive-status-line">
-  <span class="archive-status">${safeVerified}</span>
-  ${isOwner ? `<span class="archive-status-divider">/</span><span class="archive-owner">Yours</span>` : ""}
-</div>
-      </header>
+  <div class="archive-status-line">
+    <span class="archive-status">${safeVerified}</span>
+  </div>
+
+  ${isOwner ? `<div class="archive-owner-whisper">Yours</div>` : ""}
+</header>
 
       <section class="archive-hero">
         <div class="archive-hero__content">
