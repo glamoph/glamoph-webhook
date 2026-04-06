@@ -290,7 +290,6 @@ function buildPageHtml(record, recordId, options = {}) {
 
           <div class="archive-meta-line">
             <span class="archive-meta-id">${safeArtworkId}</span>
-            <span class="archive-meta-divider">/</span>
             <span class="archive-meta-edition">${safeEdition}</span>
           </div>
         </div>
