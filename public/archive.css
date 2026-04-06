@@ -197,7 +197,7 @@ button {
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.005em;
-  color: var(--muted);
+  color: rgba(20, 20, 20, 0.58);
 }
 
 .archive-meta-edition {
