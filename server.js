@@ -205,6 +205,8 @@ function resolveRecordImageUrl(value) {
 }
 
 function buildPageHtml(record, recordId, options = {}) {
+  const { isOwner } = options;
+
   const imageUrl = resolveRecordImageUrl(record.image || "");
   const safeTitle = escapeHtml(record.title || "Untitled");
   const safeVerified = escapeHtml(record.verified || "Artwork Verified");
@@ -227,6 +229,24 @@ function buildPageHtml(record, recordId, options = {}) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/archive.css" />
+  <style>
+    .archive-owner-whisper {
+      margin-top: 10px;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 18px;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      line-height: 1;
+      color: rgba(20, 20, 20, 0.72);
+    }
+
+    @media (max-width: 768px) {
+      .archive-owner-whisper {
+        margin-top: 8px;
+        font-size: 16px;
+      }
+    }
+  </style>
 </head>
 <body>
   <main class="archive-page">
@@ -236,6 +256,7 @@ function buildPageHtml(record, recordId, options = {}) {
         <div class="archive-status-line">
           <span class="archive-status">${safeVerified}</span>
         </div>
+        ${isOwner ? `<div class="archive-owner-whisper">Yours</div>` : ""}
       </header>
 
       <section class="archive-hero">
