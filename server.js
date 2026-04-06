@@ -246,7 +246,7 @@ function buildPageHtml(record, recordId, options = {}) {
   .archive-owner-whisper {
   display: block !important;
   width: 100% !important;
-  margin-top: 4px !important;
+  margin-top: 2px !important;
   text-align: right !important;
   font-family: "Cormorant Garamond", serif !important;
   font-size: 14px !important;
@@ -259,7 +259,7 @@ function buildPageHtml(record, recordId, options = {}) {
   .archive-meta-line {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
   }
 
