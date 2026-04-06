@@ -231,34 +231,34 @@ function buildPageHtml(record, recordId, options = {}) {
   <link rel="stylesheet" href="/archive.css" />
   <style>
   .archive-header {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
   }
 
   .archive-status-line {
-    display: block;
-    width: 100%;
-    text-align: right;
+    display: block !important;
+    width: 100% !important;
+    text-align: right !important;
   }
 
   .archive-owner-whisper {
-    display: block;
-    width: 100%;
-    margin-top: 6px;
-    text-align: right;
-    font-family: "Cormorant Garamond", serif;
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 1;
-    letter-spacing: 0.04em;
-    color: rgba(20, 20, 20, 0.6);
+    display: block !important;
+    width: 100% !important;
+    margin-top: 6px !important;
+    text-align: right !important;
+    font-family: "Cormorant Garamond", serif !important;
+    font-size: 16px !important;
+    font-weight: 400 !important;
+    line-height: 1 !important;
+    letter-spacing: 0.04em !important;
+    color: rgba(20, 20, 20, 0.6) !important;
   }
 
   @media (max-width: 768px) {
     .archive-owner-whisper {
-      margin-top: 5px;
-      font-size: 15px;
+      margin-top: 5px !important;
+      font-size: 15px !important;
     }
   }
 </style>
