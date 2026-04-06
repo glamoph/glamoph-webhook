@@ -257,9 +257,17 @@ function buildPageHtml(record, recordId, options = {}) {
   }
 
   @media (max-width: 768px) {
+    .archive-header {
+    align-items: flex-start !important;
+  }
+
+  .archive-status-line {
+    text-align: left !important;
+  }
     .archive-owner-whisper {
       margin-top: 5px !important;
       font-size: 15px !important;
+      text-align: left !important;
     }
   }
 </style>
