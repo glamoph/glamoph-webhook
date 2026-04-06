@@ -103,6 +103,9 @@ button {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 34px;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  padding-right: 8px!important;
 }
 
 .archive-status-line {
