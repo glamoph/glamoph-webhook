@@ -243,16 +243,16 @@ function buildPageHtml(record, recordId, options = {}) {
   }
 
   .archive-owner-whisper {
-    display: block !important;
-    width: 100% !important;
-    margin-top: 6px !important;
-    text-align: right !important;
-    font-family: "Cormorant Garamond", serif !important;
-    font-size: 16px !important;
-    font-weight: 400 !important;
-    line-height: 1 !important;
-    letter-spacing: 0.04em !important;
-    color: rgba(20, 20, 20, 0.6) !important;
+  display: block !important;
+  width: 100% !important;
+  margin-top: 4px !important;
+  text-align: right !important;
+  font-family: "Cormorant Garamond", serif !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.03em !important;
+  color: rgba(20, 20, 20, 0.52) !important;
   }
 
   @media (max-width: 768px) {
