@@ -369,17 +369,38 @@ function resolveChromiumPath() {
 async function imageToDataUri(url) {
   console.log("PDF IMAGE FETCH:", url);
 
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`PDF image fetch failed: ${res.status} ${url}`);
+  const browser = await puppeteer.launch({
+    executablePath: "/usr/bin/chromium",
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+    ],
+  });
+
+  try {
+    const page = await browser.newPage();
+
+    const response = await page.goto(url, {
+      waitUntil: "networkidle0",
+      timeout: 60000,
+    });
+
+    if (!response || !response.ok()) {
+      throw new Error(`PDF image fetch failed: ${response?.status()} ${url}`);
+    }
+
+    const buffer = await response.buffer();
+    const mimeType = response.headers()["content-type"] || "image/jpeg";
+
+    console.log("PDF IMAGE OK:", url, buffer.length);
+
+    return `data:${mimeType};base64,${buffer.toString("base64")}`;
+  } finally {
+    await browser.close();
   }
-
-  const contentType = res.headers.get("content-type") || "image/jpeg";
-  const buffer = Buffer.from(await res.arrayBuffer());
-
-  console.log("PDF IMAGE OK:", url, buffer.length);
-
-  return `data:${contentType};base64,${buffer.toString("base64")}`;
 }
 
 async function inlineImagesForPdf(html) {
