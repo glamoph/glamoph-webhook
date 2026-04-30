@@ -503,7 +503,7 @@ function buildCollectorEmailHtml(record) {
 
 const certificateUrl = escapeHtml(
   record.permanentArchiveUrl ||
-  `${ARCHIVE_ASSET_BASE_URL}/records/${record.internalId}/index.html`
+  `${ARCHIVE_ASSET_BASE_URL}/records/${record.internalId}/`
 );
 
 const pdfUrl = escapeHtml(
