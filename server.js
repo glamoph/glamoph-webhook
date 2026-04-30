@@ -442,7 +442,7 @@ async function generatePdfBase64(html) {
     await page.setBypassCSP(true);
 
     await page.setContent(inlinedHtml, {
-      waitUntil: "networkidle0",
+      waitUntil: "load",
       timeout: 120000,
     });
 
