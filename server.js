@@ -368,14 +368,9 @@ function resolveChromiumPath() {
 
 async function generatePdfBase64(html) {
   const browser = await puppeteer.launch({
-    executablePath: resolveChromiumPath(),
+    executablePath: chromium.executablePath(),
     headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-    ],
+    args: chromium.args,
   });
 
   try {
@@ -385,6 +380,25 @@ async function generatePdfBase64(html) {
       waitUntil: "networkidle0",
       timeout: 60000,
     });
+
+    // 画像ロード待機
+    await page.evaluate(async () => {
+      const images = Array.from(document.images);
+
+      await Promise.all(
+        images.map((img) => {
+          if (img.complete) return Promise.resolve();
+
+          return new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
+          });
+        })
+      );
+    });
+
+    // 少し余裕を持たせる
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const pdfBuffer = await page.pdf({
       format: "A4",
