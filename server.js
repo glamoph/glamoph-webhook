@@ -383,13 +383,14 @@ async function imageToDataUri(url) {
 }
 
 async function inlineImagesForPdf(html) {
-  const imgRegex = /<img\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi;
+  const imgRegex = /<img\b[^>]*\bsrc=(["'])(.*?)\1[^>]*>/gi;
   const matches = [...html.matchAll(imgRegex)];
 
   let result = html;
 
   for (const match of matches) {
-    const originalSrc = match[1];
+    const quote = match[1];
+    const originalSrc = match[2];
 
     const absoluteUrl = /^https?:\/\//i.test(originalSrc)
       ? originalSrc
@@ -397,8 +398,12 @@ async function inlineImagesForPdf(html) {
 
     const dataUri = await imageToDataUri(absoluteUrl);
 
-    result = result.split(`src="${originalSrc}"`).join(`src="${dataUri}"`);
-    result = result.split(`src='${originalSrc}'`).join(`src="${dataUri}"`);
+    const originalAttr = `src=${quote}${originalSrc}${quote}`;
+    result = result.replaceAll(originalAttr, `src="${dataUri}"`);
+  }
+
+  if (!result.includes("data:image")) {
+    throw new Error("PDF image inline failed: no data:image found in HTML");
   }
 
   return result;
