@@ -409,9 +409,11 @@ function buildCollectorEmailHtml(record) {
   const isJa = locale === "ja";
 
   const ownerUrl = escapeHtml(record.ownerArchiveUrl || "");
-  const publicId = escapeHtml(record.archiveId || "");
-  const edition = escapeHtml(record.edition || "");
-  const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
+const permanentUrl = escapeHtml(record.permanentArchiveUrl || "");
+const pdfUrl = escapeHtml(record.pdfUrl || "");
+const publicId = escapeHtml(record.archiveId || "");
+const edition = escapeHtml(record.edition || "");
+const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
 
   // ★ ロゴURL（ここ重要）
   const logoUrl = "https://verify.glamoph.com/assets/email/logo.png";
