@@ -798,7 +798,8 @@ async function updateRecordsLog(publicId, internalId) {
 }
 
 async function createRecordFile(internalId, record) {
-  record.permanentArchiveUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/index.html`;
+  record.permanentArchiveUrl =
+  `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/`;
   record.pdfUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/certificate.pdf`;
 
   await writeJsonFile(
