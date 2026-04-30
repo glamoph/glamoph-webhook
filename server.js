@@ -366,73 +366,9 @@ function resolveChromiumPath() {
   throw new Error("Chromium executable not found");
 }
 
-async function imageToDataUri(url) {
-  console.log("PDF IMAGE FETCH:", url);
 
-  const browser = await puppeteer.launch({
-    executablePath: "/usr/bin/chromium",
-    headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-    ],
-  });
-
-  try {
-    const page = await browser.newPage();
-
-    const response = await page.goto(url, {
-      waitUntil: "networkidle0",
-      timeout: 60000,
-    });
-
-    if (!response || !response.ok()) {
-      throw new Error(`PDF image fetch failed: ${response?.status()} ${url}`);
-    }
-
-    const buffer = await response.buffer();
-    const mimeType = response.headers()["content-type"] || "image/jpeg";
-
-    console.log("PDF IMAGE OK:", url, buffer.length);
-
-    return `data:${mimeType};base64,${buffer.toString("base64")}`;
-  } finally {
-    await browser.close();
-  }
-}
-
-async function inlineImagesForPdf(html) {
-  const imgRegex = /<img\b[^>]*\bsrc=(["'])(.*?)\1[^>]*>/gi;
-  const matches = [...html.matchAll(imgRegex)];
-
-  let result = html;
-
-  for (const match of matches) {
-    const quote = match[1];
-    const originalSrc = match[2];
-
-    const absoluteUrl = /^https?:\/\//i.test(originalSrc)
-      ? originalSrc
-      : `${ARCHIVE_ASSET_BASE_URL}${originalSrc.startsWith("/") ? originalSrc : `/${originalSrc}`}`;
-
-    const dataUri = await imageToDataUri(absoluteUrl);
-
-    const originalAttr = `src=${quote}${originalSrc}${quote}`;
-    result = result.replaceAll(originalAttr, `src="${dataUri}"`);
-  }
-
-  if (!result.includes("data:image")) {
-    throw new Error("PDF image inline failed: no data:image found in HTML");
-  }
-
-  return result;
-}
 
 async function generatePdfBase64(html) {
-  const inlinedHtml = await inlineImagesForPdf(html);
-
   const browser = await puppeteer.launch({
     executablePath: "/usr/bin/chromium",
     headless: true,
@@ -453,12 +389,18 @@ async function generatePdfBase64(html) {
       deviceScaleFactor: 2,
     });
 
-    await page.setContent(inlinedHtml, {
-  waitUntil: "load",
-  timeout: 60000,
-});
+    await page.setBypassCSP(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await page.setContent(html, {
+      waitUntil: "networkidle0",
+      timeout: 120000,
+    });
+
+    await page.waitForFunction(() => {
+      return Array.from(document.images).every((img) => img.complete);
+    }, { timeout: 120000 });
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     const pdfBuffer = await page.pdf({
       format: "A4",
