@@ -483,26 +483,6 @@ const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
 </tr>
 
 <tr>
-  <td style="padding-bottom:14px;">
-    <a href="${permanentUrl}" target="_blank"
-      style="
-        display:inline-block;
-        padding:16px 24px;
-        background:#ffffff;
-        color:#000000;
-        text-decoration:none;
-        font-size:13px;
-        letter-spacing:0.06em;
-        min-width:220px;
-        text-align:center;
-        border:1px solid #dddddd;
-      ">
-      Permanent Archive
-    </a>
-  </td>
-</tr>
-
-<tr>
   <td style="padding-bottom:28px;">
     <a href="${pdfUrl}" target="_blank"
       style="
@@ -516,7 +496,7 @@ const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
         min-width:220px;
         text-align:center;
       ">
-      Download PDF
+      PDFを保存
     </a>
   </td>
 </tr>
@@ -579,25 +559,44 @@ const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
     </tr>
 
     <!-- CTA BUTTON -->
-    <tr>
-      <td style="padding-bottom:28px;">
-        <a href="${ownerUrl}" target="_blank"
-          style="
-            display:inline-block;
-            padding:16px 24px;
-            background:#ffffff;
-            color:#000000;
-            text-decoration:none;
-            font-size:13px;
-            letter-spacing:0.06em;
-            min-width:220px;
-            text-align:center;
-            border:1px solid #dddddd;
-          ">
-          VIEW CERTIFICATE
-        </a>
-      </td>
-    </tr>
+   <tr>
+  <td style="padding-bottom:14px;">
+    <a href="${ownerUrl}" target="_blank"
+      style="
+        display:inline-block;
+        padding:16px 24px;
+        background:#ffffff;
+        color:#000000;
+        text-decoration:none;
+        font-size:13px;
+        letter-spacing:0.06em;
+        min-width:220px;
+        text-align:center;
+        border:1px solid #dddddd;
+      ">
+      VIEW CERTIFICATE
+    </a>
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-bottom:28px;">
+    <a href="${pdfUrl}" target="_blank"
+      style="
+        display:inline-block;
+        padding:16px 24px;
+        background:#000000;
+        color:#ffffff;
+        text-decoration:none;
+        font-size:13px;
+        letter-spacing:0.06em;
+        min-width:220px;
+        text-align:center;
+      ">
+      SAVE PDF
+    </a>
+  </td>
+</tr>
 
     <!-- META -->
     <tr>
