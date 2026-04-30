@@ -428,9 +428,9 @@ async function generatePdfBase64(html) {
     });
 
     await page.setContent(inlinedHtml, {
-      waitUntil: "load",
-      timeout: 60000,
-    });
+  waitUntil: "load",
+  timeout: 60000,
+});
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
