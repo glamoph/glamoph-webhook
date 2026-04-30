@@ -368,10 +368,15 @@ function resolveChromiumPath() {
 
 async function generatePdfBase64(html) {
   const browser = await puppeteer.launch({
-    executablePath: chromium.executablePath(),
-    headless: true,
-    args: chromium.args,
-  });
+  executablePath: "/usr/bin/chromium",
+  headless: true,
+  args: [
+    "--no-sandbox",
+    "--disable-setuid-sandbox",
+    "--disable-dev-shm-usage",
+    "--disable-gpu",
+  ],
+});
 
   try {
     const page = await browser.newPage();
