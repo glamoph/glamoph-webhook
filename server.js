@@ -646,7 +646,17 @@ async function createRecordFile(internalId, record) {
   await writeJsonFile(
     `records/${internalId}/data.json`,
     record,
-    `Create record: ${internalId}`
+    `Create record data: ${internalId}`
+  );
+
+  const staticHtml = buildPageHtml(record, record.archiveId, { isOwner: false })
+    .replace('href="/archive.css"', `href="${ARCHIVE_ASSET_BASE_URL}/archive.css"`)
+    .replace('src="/assets/signature.png"', `src="${ARCHIVE_ASSET_BASE_URL}/assets/signature.png"`);
+
+  await writeJsonFile(
+    `records/${internalId}/index.html`,
+    staticHtml,
+    `Create record page: ${internalId}`
   );
 }
 
