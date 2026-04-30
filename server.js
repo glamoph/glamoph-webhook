@@ -346,14 +346,29 @@ function buildPdfHtml(record) {
 
 function resolveChromiumPath() {
   const candidates = [
+    process.env.PUPPETEER_EXECUTABLE_PATH,
+    "/nix/store/*/bin/chromium",
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
+    "/usr/bin/google-chrome",
+    "/usr/bin/google-chrome-stable",
     "chromium",
     "chromium-browser",
     "google-chrome",
     "google-chrome-stable",
-  ];
+  ].filter(Boolean);
 
   for (const name of candidates) {
     try {
+      if (name.includes("*")) {
+        return execSync(`ls ${name} | head -n 1`).toString().trim();
+      }
+
+      if (name.startsWith("/")) {
+        execSync(`test -x ${name}`);
+        return name;
+      }
+
       return execSync(`which ${name}`).toString().trim();
     } catch (_) {}
   }
