@@ -368,48 +368,36 @@ function resolveChromiumPath() {
 
 async function generatePdfBase64(html) {
   const browser = await puppeteer.launch({
-  executablePath: "/usr/bin/chromium",
-  headless: true,
-  args: [
-    "--no-sandbox",
-    "--disable-setuid-sandbox",
-    "--disable-dev-shm-usage",
-    "--disable-gpu",
-  ],
-});
+    executablePath: "/usr/bin/chromium",
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+    ],
+  });
 
   try {
     const page = await browser.newPage();
 
     await page.setViewport({
-  width: 1400,
-  height: 2000,
-  deviceScaleFactor: 2,
-});
+      width: 1400,
+      height: 2000,
+      deviceScaleFactor: 2,
+    });
 
     await page.setContent(html, {
       waitUntil: "networkidle0",
       timeout: 60000,
     });
 
-    // 画像ロード待機
-    await page.evaluate(async () => {
-      const images = Array.from(document.images);
+    await page.waitForFunction(() => {
+      const imgs = Array.from(document.images);
+      return imgs.length > 0 && imgs.every((img) => img.complete && img.naturalWidth > 0);
+    }, { timeout: 60000 });
 
-      await Promise.all(
-        images.map((img) => {
-          if (img.complete) return Promise.resolve();
-
-          return new Promise((resolve) => {
-            img.onload = resolve;
-            img.onerror = resolve;
-          });
-        })
-      );
-    });
-
-    // 少し余裕を持たせる
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
     const pdfBuffer = await page.pdf({
       format: "A4",
