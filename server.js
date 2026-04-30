@@ -348,7 +348,7 @@ async function generatePdfBase64(html) {
   const browser = await puppeteer.launch({
     args: chromium.args,
     executablePath: await chromium.executablePath(),
-    headless: chromium.headless,
+    headless: true,
   });
 
   try {
