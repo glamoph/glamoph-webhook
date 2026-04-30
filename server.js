@@ -345,31 +345,21 @@ function buildPdfHtml(record) {
 }
 
 function resolveChromiumPath() {
-  const candidates = [
-    process.env.PUPPETEER_EXECUTABLE_PATH,
-    "/nix/store/*/bin/chromium",
-    "/usr/bin/chromium",
-    "/usr/bin/chromium-browser",
-    "/usr/bin/google-chrome",
-    "/usr/bin/google-chrome-stable",
-    "chromium",
-    "chromium-browser",
-    "google-chrome",
-    "google-chrome-stable",
-  ].filter(Boolean);
+  const commands = [
+    "which chromium",
+    "which chromium-browser",
+    "which google-chrome",
+    "which google-chrome-stable",
+    "find /nix/store -name chromium -type f | head -n 1",
+  ];
 
-  for (const name of candidates) {
+  for (const cmd of commands) {
     try {
-      if (name.includes("*")) {
-        return execSync(`ls ${name} | head -n 1`).toString().trim();
-      }
+      const result = execSync(cmd).toString().trim();
 
-      if (name.startsWith("/")) {
-        execSync(`test -x ${name}`);
-        return name;
+      if (result) {
+        return result;
       }
-
-      return execSync(`which ${name}`).toString().trim();
     } catch (_) {}
   }
 
