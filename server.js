@@ -367,32 +367,38 @@ function resolveChromiumPath() {
 }
 
 async function imageToDataUri(url) {
+  console.log("PDF IMAGE FETCH:", url);
+
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Image fetch failed: ${res.status} ${url}`);
+  if (!res.ok) {
+    throw new Error(`PDF image fetch failed: ${res.status} ${url}`);
+  }
 
   const contentType = res.headers.get("content-type") || "image/jpeg";
   const buffer = Buffer.from(await res.arrayBuffer());
+
+  console.log("PDF IMAGE OK:", url, buffer.length);
 
   return `data:${contentType};base64,${buffer.toString("base64")}`;
 }
 
 async function inlineImagesForPdf(html) {
-  const srcMatches = [...html.matchAll(/<img\b[^>]*\bsrc="([^"]+)"/g)];
-  const uniqueSrcs = [...new Set(srcMatches.map((m) => m[1]))];
+  const imgRegex = /<img\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi;
+  const matches = [...html.matchAll(imgRegex)];
 
   let result = html;
 
-  for (const src of uniqueSrcs) {
-    try {
-      const absoluteUrl = /^https?:\/\//i.test(src)
-        ? src
-        : `${ARCHIVE_ASSET_BASE_URL}${src.startsWith("/") ? src : `/${src}`}`;
+  for (const match of matches) {
+    const originalSrc = match[1];
 
-      const dataUri = await imageToDataUri(absoluteUrl);
-      result = result.replaceAll(`src="${src}"`, `src="${dataUri}"`);
-    } catch (error) {
-      console.error("PDF image inline failed:", src, error);
-    }
+    const absoluteUrl = /^https?:\/\//i.test(originalSrc)
+      ? originalSrc
+      : `${ARCHIVE_ASSET_BASE_URL}${originalSrc.startsWith("/") ? originalSrc : `/${originalSrc}`}`;
+
+    const dataUri = await imageToDataUri(absoluteUrl);
+
+    result = result.split(`src="${originalSrc}"`).join(`src="${dataUri}"`);
+    result = result.split(`src='${originalSrc}'`).join(`src="${dataUri}"`);
   }
 
   return result;
