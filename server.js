@@ -653,11 +653,11 @@ async function createRecordFile(internalId, record) {
     .replace('href="/archive.css"', `href="${ARCHIVE_ASSET_BASE_URL}/archive.css"`)
     .replace('src="/assets/signature.png"', `src="${ARCHIVE_ASSET_BASE_URL}/assets/signature.png"`);
 
-  await writeJsonFile(
-    `records/${internalId}/index.html`,
-    staticHtml,
-    `Create record page: ${internalId}`
-  );
+  await putFileBase64({
+    path: `records/${internalId}/index.html`,
+    base64Content: Buffer.from(staticHtml, "utf8").toString("base64"),
+    message: `Create record page: ${internalId}`,
+  });
 }
 
 function normalizeOrderId(value) {
