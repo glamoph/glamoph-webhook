@@ -376,6 +376,12 @@ async function generatePdfBase64(html) {
   try {
     const page = await browser.newPage();
 
+    await page.setViewport({
+  width: 1400,
+  height: 2000,
+  deviceScaleFactor: 2,
+});
+
     await page.setContent(html, {
       waitUntil: "networkidle0",
       timeout: 60000,
