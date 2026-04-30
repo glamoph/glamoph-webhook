@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "type": "commonjs",
   "main": "server.js",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "build": "echo build"
   },
   "dependencies": {
-    "@sparticuz/chromium": "^131.0.0",
     "express": "^5.2.1",
     "puppeteer-core": "^24.0.0",
     "resend": "^4.0.0"
