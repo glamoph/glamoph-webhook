@@ -693,21 +693,35 @@ async function updateRecordsLog(publicId, internalId) {
 }
 
 async function createRecordFile(internalId, record) {
+  record.permanentArchiveUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/index.html`;
+  record.pdfUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/certificate.pdf`;
+
   await writeJsonFile(
     `records/${internalId}/data.json`,
     record,
     `Create record data: ${internalId}`
   );
 
-  const staticHtml = buildPageHtml(record, record.archiveId, { isOwner: false })
-    .replace('href="/archive.css"', `href="${ARCHIVE_ASSET_BASE_URL}/public/archive.css"`)
-    .replace('src="/assets/signature.png"', `src="${ARCHIVE_ASSET_BASE_URL}/public/assets/signature.png"`);
+  const staticHtml = buildStaticPageHtml(record);
 
   await putFileBase64({
     path: `records/${internalId}/index.html`,
     base64Content: Buffer.from(staticHtml, "utf8").toString("base64"),
     message: `Create record page: ${internalId}`,
   });
+
+  try {
+    const pdfHtml = buildPdfHtml(record);
+    const pdfBase64 = await generatePdfBase64(pdfHtml);
+
+    await putFileBase64({
+      path: `records/${internalId}/certificate.pdf`,
+      base64Content: pdfBase64,
+      message: `Create record PDF: ${internalId}`,
+    });
+  } catch (error) {
+    console.error("PDF generation failed:", error);
+  }
 }
 
 function normalizeOrderId(value) {
