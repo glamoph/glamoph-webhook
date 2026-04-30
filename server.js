@@ -488,24 +488,7 @@ const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
   </td>
 </tr>
 
-<tr>
-  <td style="padding-bottom:28px;">
-    <a href="${pdfUrl}" target="_blank"
-      style="
-        display:inline-block;
-        padding:16px 24px;
-        background:#000000;
-        color:#ffffff;
-        text-decoration:none;
-        font-size:13px;
-        letter-spacing:0.06em;
-        min-width:220px;
-        text-align:center;
-      ">
-      PDFを保存
-    </a>
-  </td>
-</tr>
+
 
     <!-- META -->
     <tr>
@@ -585,24 +568,7 @@ const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
   </td>
 </tr>
 
-<tr>
-  <td style="padding-bottom:28px;">
-    <a href="${pdfUrl}" target="_blank"
-      style="
-        display:inline-block;
-        padding:16px 24px;
-        background:#000000;
-        color:#ffffff;
-        text-decoration:none;
-        font-size:13px;
-        letter-spacing:0.06em;
-        min-width:220px;
-        text-align:center;
-      ">
-      SAVE PDF
-    </a>
-  </td>
-</tr>
+
 
     <!-- META -->
     <tr>
