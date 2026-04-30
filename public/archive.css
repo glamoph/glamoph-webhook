@@ -180,7 +180,7 @@ button {
 
 .archive-title {
   margin: 0 0 18px;
-  max-width: 8.6ch;
+  max-width: 8.4ch;
   color: var(--ink);
   font-family: "Cormorant Garamond", serif;
   font-size: clamp(48px, 5.2vw, 76px);
