@@ -417,6 +417,8 @@ async function inlineImagesForPdf(html) {
 }
 
 async function generatePdfBase64(html) {
+  const inlinedHtml = await inlineImagesForPdf(html);
+
   const browser = await puppeteer.launch({
     executablePath: "/usr/bin/chromium",
     headless: true,
