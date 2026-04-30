@@ -5,7 +5,7 @@ const crypto = require("crypto");
 const path = require("path");
 const { Resend } = require("resend");
 const puppeteer = require("puppeteer-core");
-const chromium = require("@sparticuz/chromium");
+const { execSync } = require("child_process");
 
 const { verifyShopifyWebhook } = require("./lib/webhook-verify");
 const { readJsonFile, writeJsonFile, putFileBase64 } = require("./lib/github-contents");
@@ -344,11 +344,33 @@ function buildPdfHtml(record) {
   );
 }
 
+function resolveChromiumPath() {
+  const candidates = [
+    "chromium",
+    "chromium-browser",
+    "google-chrome",
+    "google-chrome-stable",
+  ];
+
+  for (const name of candidates) {
+    try {
+      return execSync(`which ${name}`).toString().trim();
+    } catch (_) {}
+  }
+
+  throw new Error("Chromium executable not found");
+}
+
 async function generatePdfBase64(html) {
   const browser = await puppeteer.launch({
-    args: chromium.args,
-    executablePath: await chromium.executablePath(),
+    executablePath: resolveChromiumPath(),
     headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+    ],
   });
 
   try {
