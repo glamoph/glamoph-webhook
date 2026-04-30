@@ -408,9 +408,15 @@ function buildCollectorEmailHtml(record) {
   const locale = resolveEmailLocale(record);
   const isJa = locale === "ja";
 
-  const ownerUrl = escapeHtml(record.ownerArchiveUrl || "");
-const permanentUrl = escapeHtml(record.permanentArchiveUrl || "");
-const pdfUrl = escapeHtml(record.pdfUrl || "");
+const certificateUrl = escapeHtml(
+  record.permanentArchiveUrl ||
+  `${ARCHIVE_ASSET_BASE_URL}/records/${record.internalId}/index.html`
+);
+
+const pdfUrl = escapeHtml(
+  record.pdfUrl ||
+  `${ARCHIVE_ASSET_BASE_URL}/records/${record.internalId}/certificate.pdf`
+);
 const publicId = escapeHtml(record.archiveId || "");
 const edition = escapeHtml(record.edition || "");
 const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
@@ -464,7 +470,7 @@ const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
     <!-- CTA BUTTON -->
     <tr>
   <td style="padding-bottom:14px;">
-    <a href="${ownerUrl}" target="_blank"
+    <a href="${certificateUrl}" target="_blank"
       style="
         display:inline-block;
         padding:16px 24px;
@@ -561,7 +567,7 @@ const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
     <!-- CTA BUTTON -->
    <tr>
   <td style="padding-bottom:14px;">
-    <a href="${ownerUrl}" target="_blank"
+    <a href="${certificateUrl}" target="_blank"
       style="
         display:inline-block;
         padding:16px 24px;
