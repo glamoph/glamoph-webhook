@@ -366,7 +366,55 @@ function resolveChromiumPath() {
   throw new Error("Chromium executable not found");
 }
 
+async function imageToDataUri(url) {
+  const rawUrl = url.replace(
+    "https://archive.glamoph.com/",
+    "https://raw.githubusercontent.com/glamoph/glamoph-archive/main/"
+  );
 
+  console.log("PDF IMAGE RAW FETCH:", rawUrl);
+
+  const res = await fetch(rawUrl, {
+    headers: {
+      "User-Agent": "GLAMOPH-PDF-Renderer",
+      "Accept": "image/*",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`PDF raw image fetch failed: ${res.status} ${rawUrl}`);
+  }
+
+  const contentType = res.headers.get("content-type") || "image/jpeg";
+  const buffer = Buffer.from(await res.arrayBuffer());
+
+  console.log("PDF IMAGE RAW OK:", rawUrl, buffer.length);
+
+  return `data:${contentType};base64,${buffer.toString("base64")}`;
+}
+
+async function inlineImagesForPdf(html) {
+  const imgRegex = /<img\b[^>]*\bsrc=(["'])(.*?)\1[^>]*>/gi;
+  const matches = [...html.matchAll(imgRegex)];
+
+  let result = html;
+
+  for (const match of matches) {
+    const quote = match[1];
+    const originalSrc = match[2];
+
+    const absoluteUrl = /^https?:\/\//i.test(originalSrc)
+      ? originalSrc
+      : `${ARCHIVE_ASSET_BASE_URL}${originalSrc.startsWith("/") ? originalSrc : `/${originalSrc}`}`;
+
+    const dataUri = await imageToDataUri(absoluteUrl);
+
+    const originalAttr = `src=${quote}${originalSrc}${quote}`;
+    result = result.replaceAll(originalAttr, `src="${dataUri}"`);
+  }
+
+  return result;
+}
 
 async function generatePdfBase64(html) {
   const browser = await puppeteer.launch({
