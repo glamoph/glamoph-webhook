@@ -6,7 +6,7 @@ const path = require("path");
 const { Resend } = require("resend");
 
 const { verifyShopifyWebhook } = require("./lib/webhook-verify");
-const { readJsonFile, writeJsonFile } = require("./lib/github-contents");
+const { readJsonFile, writeJsonFile, putFileBase64 } = require("./lib/github-contents");
 const { syncProductFeaturedImageToGitHub } = require("./lib/image-sync");
 
 const app = express();
