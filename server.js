@@ -366,7 +366,41 @@ function resolveChromiumPath() {
   throw new Error("Chromium executable not found");
 }
 
+async function imageToDataUri(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Image fetch failed: ${res.status} ${url}`);
+
+  const contentType = res.headers.get("content-type") || "image/jpeg";
+  const buffer = Buffer.from(await res.arrayBuffer());
+
+  return `data:${contentType};base64,${buffer.toString("base64")}`;
+}
+
+async function inlineImagesForPdf(html) {
+  const srcMatches = [...html.matchAll(/<img\b[^>]*\bsrc="([^"]+)"/g)];
+  const uniqueSrcs = [...new Set(srcMatches.map((m) => m[1]))];
+
+  let result = html;
+
+  for (const src of uniqueSrcs) {
+    try {
+      const absoluteUrl = /^https?:\/\//i.test(src)
+        ? src
+        : `${ARCHIVE_ASSET_BASE_URL}${src.startsWith("/") ? src : `/${src}`}`;
+
+      const dataUri = await imageToDataUri(absoluteUrl);
+      result = result.replaceAll(`src="${src}"`, `src="${dataUri}"`);
+    } catch (error) {
+      console.error("PDF image inline failed:", src, error);
+    }
+  }
+
+  return result;
+}
+
 async function generatePdfBase64(html) {
+  const inlinedHtml = await inlineImagesForPdf(html);
+
   const browser = await puppeteer.launch({
     executablePath: "/usr/bin/chromium",
     headless: true,
@@ -387,17 +421,12 @@ async function generatePdfBase64(html) {
       deviceScaleFactor: 2,
     });
 
-    await page.setContent(html, {
-      waitUntil: "networkidle0",
+    await page.setContent(inlinedHtml, {
+      waitUntil: "load",
       timeout: 60000,
     });
 
-    await page.waitForFunction(() => {
-      const imgs = Array.from(document.images);
-      return imgs.length > 0 && imgs.every((img) => img.complete && img.naturalWidth > 0);
-    }, { timeout: 60000 });
-
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const pdfBuffer = await page.pdf({
       format: "A4",
