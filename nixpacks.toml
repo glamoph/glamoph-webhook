@@ -1,0 +1,26 @@
+[phases.setup]
+nixPkgs = [
+  "nodejs",
+  "chromium",
+  "nss",
+  "atk",
+  "atk-bridge",
+  "cups",
+  "dbus",
+  "drm",
+  "expat",
+  "glib",
+  "gtk3",
+  "nspr",
+  "pango",
+  "xorg.libx11",
+  "xorg.libxcomposite",
+  "xorg.libxdamage",
+  "xorg.libxext",
+  "xorg.libxfixes",
+  "xorg.libxrandr",
+  "xorg.libxrender",
+  "xorg.libxcb",
+  "xorg.libxkbcommon",
+  "mesa"
+]
