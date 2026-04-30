@@ -446,9 +446,6 @@ async function generatePdfBase64(html) {
       timeout: 120000,
     });
 
-    await page.waitForFunction(() => {
-      return Array.from(document.images).every((img) => img.complete);
-    }, { timeout: 120000 });
 
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
