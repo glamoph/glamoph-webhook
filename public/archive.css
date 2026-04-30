@@ -179,14 +179,19 @@ button {
 }
 
 .archive-title {
-  margin: 0 0 18px;
-  max-width: 7ch;
-  color: var(--ink);
   font-family: "Cormorant Garamond", serif;
-  font-size: clamp(46px, 5.0vw, 74px);
-  line-height: 0.96;
-  font-weight: 100!important;
+  font-weight: 300;
+
+  font-size: clamp(64px, 7vw, 108px);
+  line-height: 0.88;
   letter-spacing: -0.045em;
+
+  max-width: 7.5ch;
+
+  text-wrap: balance;
+
+  word-break: keep-all;
+  overflow-wrap: normal;
 }
 
 .archive-meta-line {
