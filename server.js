@@ -71,7 +71,7 @@ app.post('/api/publish', express.json(), async (req, res) => {
       medium: medium || "Archival pigment print on fine art paper",
       size: size,
       frame: frame || "Black",
-      archiveUrl: `${VERIFY_PUBLIC_BASE_URL}/${artworkId}`,
+      archiveUrl: `https://archive.glamoph.com/records/${publicId}`,
       image: image || `/images/${artworkCode}.jpg`
     };
 
