@@ -4,6 +4,8 @@ const express = require("express");
 const crypto = require("crypto");
 const path = require("path");
 const { Resend } = require("resend");
+const puppeteer = require("puppeteer-core");
+const chromium = require("@sparticuz/chromium");
 
 const { verifyShopifyWebhook } = require("./lib/webhook-verify");
 const { readJsonFile, writeJsonFile, putFileBase64 } = require("./lib/github-contents");
