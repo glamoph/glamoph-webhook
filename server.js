@@ -1078,7 +1078,7 @@ async function processOrderWebhook(order) {
     };
 
     try {
-      const syncedImage = await syncProductFeaturedImageToGitHub(productId);
+      const syncedImage = await syncProductFeaturedImageToGitHub(productId, artworkCode);
       if (syncedImage?.filePath) imageResult = syncedImage;
     } catch (error) {
       console.error("Image sync failed:", error);
