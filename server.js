@@ -1191,17 +1191,20 @@ async function processOrderWebhook(order) {
     await updateRecordsLog(publicId, internalId);
 
     await updateIssuedIndex(lineItemId, {
-      publicId,
-      internalId,
-      orderId,
-      orderName,
-      sku,
-      createdAt,
-    });
+  publicId,
+  internalId,
+  orderId,
+  orderName,
+  sku,
+  createdAt,
+});
 
-    await sendCollectorAccessEmail(record);
+// GitHub Pages の公開反映待ち
+await new Promise((resolve) => setTimeout(resolve, 30000));
 
-    console.log("Issued:", publicId, "=>", internalId);
+await sendCollectorAccessEmail(record);
+
+console.log("Issued:", publicId, "=>", internalId);
   }
 }
 
