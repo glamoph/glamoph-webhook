@@ -650,10 +650,9 @@ async function createRecordFile(internalId, record) {
   );
 
   const staticHtml = buildPageHtml(record, record.archiveId, { isOwner: false })
-    const staticHtml = buildPageHtml(record, record.archiveId, { isOwner: false })
+  const staticHtml = buildPageHtml(record, record.archiveId, { isOwner: false })
   .replace('href="/archive.css"', `href="${ARCHIVE_ASSET_BASE_URL}/public/archive.css"`)
   .replace('src="/assets/signature.png"', `src="${ARCHIVE_ASSET_BASE_URL}/public/assets/signature.png"`);
-    .replace('src="/assets/signature.png"', `src="${ARCHIVE_ASSET_BASE_URL}/assets/signature.png"`);
 
   await putFileBase64({
     path: `records/${internalId}/index.html`,
