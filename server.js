@@ -322,6 +322,54 @@ function buildPageHtml(record, recordId, options = {}) {
 </html>`;
 }
 
+function buildStaticPageHtml(record) {
+  const pdfUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${record.internalId}/certificate.pdf`;
+
+  return buildPageHtml(record, record.archiveId, { isOwner: false })
+    .replace('href="/archive.css"', `href="${ARCHIVE_ASSET_BASE_URL}/public/archive.css"`)
+    .replace('src="/assets/signature.png"', `src="${ARCHIVE_ASSET_BASE_URL}/public/assets/signature.png"`)
+    .replace(
+      '<button class="archive-download" type="button" onclick="window.print()">Download PDF</button>',
+      `<a class="archive-download" href="${pdfUrl}" target="_blank" rel="noopener noreferrer">Download PDF</a>`
+    );
+}
+
+function buildPdfHtml(record) {
+  return buildStaticPageHtml(record).replace(
+    "</head>",
+    `<style>
+      @page { size: A4; margin: 0; }
+      .archive-download { display: none !important; }
+    </style></head>`
+  );
+}
+
+async function generatePdfBase64(html) {
+  const browser = await puppeteer.launch({
+    args: chromium.args,
+    executablePath: await chromium.executablePath(),
+    headless: chromium.headless,
+  });
+
+  try {
+    const page = await browser.newPage();
+
+    await page.setContent(html, {
+      waitUntil: "networkidle0",
+      timeout: 60000,
+    });
+
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+    });
+
+    return Buffer.from(pdfBuffer).toString("base64");
+  } finally {
+    await browser.close();
+  }
+}
+
 function resolveEmailLocale(record) {
   const candidates = [
     record?.locale,
