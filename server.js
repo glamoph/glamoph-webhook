@@ -211,7 +211,7 @@ function buildPageHtml(record, recordId, options = {}) {
 
   const imageUrl = resolveRecordImageUrl(record.image || "");
   const safeTitle = escapeHtml(record.title || "Untitled");
-  const safeVerified = escapeHtml(record.verified || "Artwork Verified");
+  const safeVerified = "ARCHIVE RECORD";
   const safeArtworkId = escapeHtml(record.archiveId || recordId);
   const safeEdition = escapeHtml(record.edition || "");
   const safeArtist = escapeHtml(record.artist || "GLAMOPH");
