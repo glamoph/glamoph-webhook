@@ -586,6 +586,28 @@
 
             <div class="status" id="resendStatus"></div>
 
+            <hr style="margin:24px 0;border:none;border-top:1px solid rgba(19,19,19,0.1);" />
+
+<div class="field">
+  <label for="regeneratePdfRecordId">Record ID</label>
+  <input
+    id="regeneratePdfRecordId"
+    type="text"
+    placeholder="GLA-TWGBLU-S-001 or GLA-TWGBLU-S-001-WKLNM64R"
+  />
+  <div class="hint">
+    Enter public ID or internal ID to regenerate certificate.pdf.
+  </div>
+</div>
+
+<div class="actions">
+  <button class="button" type="button" id="regeneratePdfBtn">
+    Regenerate PDF
+  </button>
+</div>
+
+<div class="status" id="regeneratePdfStatus"></div>
+
             <div class="actions">
               <button class="button button-primary" type="submit" id="publishBtn">
                 Issue Certificate
