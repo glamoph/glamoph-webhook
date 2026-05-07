@@ -1029,6 +1029,59 @@ title: document.getElementById('title'),
       window.open(state.lastArchiveUrl, '_blank', 'noopener,noreferrer');
     }
 
+    async function regeneratePdf() {
+  const recordId = String(el.regeneratePdfRecordId?.value || '').trim();
+  const token = String(el.resendAdminToken?.value || '').trim();
+
+  if (!recordId) {
+    el.regeneratePdfStatus.textContent = 'Missing Record ID';
+    el.regeneratePdfStatus.className = 'status error';
+    return;
+  }
+
+  if (!token) {
+    el.regeneratePdfStatus.textContent = 'Missing Admin Token';
+    el.regeneratePdfStatus.className = 'status error';
+    return;
+  }
+
+  el.regeneratePdfBtn.disabled = true;
+  el.regeneratePdfStatus.textContent = 'Regenerating PDF...';
+  el.regeneratePdfStatus.className = 'status';
+
+  try {
+    const res = await fetch(
+      `https://verify.glamoph.com/admin/regenerate-pdf/${encodeURIComponent(recordId)}`,
+      {
+        method: 'POST',
+        headers: {
+          'x-admin-token': token
+        }
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || 'Failed to regenerate PDF');
+    }
+
+    el.regeneratePdfStatus.className = 'status success';
+    el.regeneratePdfStatus.innerHTML = `
+      PDF regenerated successfully.<br />
+      <span class="mono">${escapeHtml(data.internalId || '')}</span><br />
+      <a href="${escapeHtml(data.pdfUrl)}" target="_blank" rel="noopener noreferrer">
+        Open regenerated PDF
+      </a>
+    `;
+  } catch (err) {
+    el.regeneratePdfStatus.textContent = err.message;
+    el.regeneratePdfStatus.className = 'status error';
+  } finally {
+    el.regeneratePdfBtn.disabled = false;
+  }
+}
+
     function onFieldInput() {
       renderPreview(buildPreviewDraft());
     }
