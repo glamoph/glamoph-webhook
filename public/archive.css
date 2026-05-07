@@ -101,71 +101,18 @@ button {
 }
 
 .archive-header {
-  display: flex;
-  justify-content: flex-end;
   margin-bottom: 34px;
-  flex-direction: column !important;
-  align-items: flex-end !important;
-  padding-right: 8px!important;
 }
-
-.archive-status-line {
-  display: block;
-  width: 100%;
-  text-align: right;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 10px;
-
-  margin: 0;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-
-  color: rgba(20, 20, 20, 0.45);
-}
-
-.archive-owner-whisper {
-  display: block !important;
-  width: 100% !important;
-  margin-top: 2px !important;
-  text-align: right !important;
-  font-family: "Cormorant Garamond", serif !important;
-  font-size: 14px !important;
-  font-weight: 400 !important;
-  line-height: 1 !important;
-  letter-spacing: 0.03em !important;
-  color: rgba(20, 20, 20, 0.52) !important;
-  }
 
 .archive-status {
   margin: 0;
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1.2;
-  letter-spacing: 0.14em;
-  font-weight: 500;
-  color: var(--muted);
+  letter-spacing: 0.18em;
+  font-weight: 400;
+  color: rgba(20, 20, 20, 0.42);
   text-transform: uppercase;
-  text-align: right;
 }
-
-.archive-status-divider {
-  font-size: 13px;
-  line-height: 1;
-  color: rgba(0, 0, 0, 0.38);
-}
-
-.archive-owner {
-  font-family: "Courier New", monospace !important;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.005em;
-  color: var(--muted);
-  margin: 0;
-  color: rgba(0, 0, 0, 0.58);
-  text-align: right;
-}
-
 
 .archive-hero {
   display: grid;
@@ -202,8 +149,32 @@ button {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 14px;
   padding-top: 4px;
+}
+
+.archive-meta-line .archive-meta-id {
+  font-family: "Courier New", monospace !important;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.6;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.archive-meta-line .archive-meta-edition {
+  font-family: "Courier New", monospace !important;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.6;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .archive-meta-item {
@@ -220,28 +191,12 @@ button {
   color: var(--ink);
 }
 
-.archive-meta-id {
-  font-family: "Courier New", monospace !important;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.005em;
-  color: rgba(20, 20, 20, 0.58);
-}
-
-.archive-meta-edition {
-  font-family: "Courier New", monospace !important;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.005em;
-  color: rgba(20, 20, 20, 0.58);
-}
-
 .archive-meta-value {
   font-family: "Courier New", monospace !important;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.005em;
-  color: rgba(20, 20, 20, 0.58);
+  color: var(--muted);
 }
 
 .archive-meta-divider {
@@ -302,7 +257,7 @@ button {
   grid-template-columns: 160px minmax(0, 1fr);
   gap: 16px;
   align-items: start;
-  padding: 14px 0;
+  padding: 12px 0;
   border-bottom: 1px solid var(--line);
 }
 
@@ -325,7 +280,7 @@ button {
   font-weight: 600;
   letter-spacing: 0.01em;
   line-height: 1.6;
-  color: rgba(20, 20, 20, 0.58);
+  color: var(--muted);
   overflow-wrap: anywhere;
   word-break: break-word;
 }
@@ -427,7 +382,6 @@ html.is-printing .archive-download {
   color: rgba(20, 20, 20, 0.62);
 }
 
-
 @media (max-width: 1100px) {
   .archive-shell {
     padding: 42px 40px 30px;
@@ -527,42 +481,6 @@ html.is-printing .archive-download {
     opacity: 1;
     filter: none;
   }
-
-   .archive-header {
-    display: block !important;
-    width: 100% !important;
-    margin: 0 0 20px 0 !important;
-    text-align: left !important;
-    align-items: flex-start !important;
-  }
-
-  .archive-status-line {
-    display: block !important;
-    width: auto !important;
-    margin: 0 !important;
-    text-align: left !important;
-  }
-
-  .archive-status,
-  .archive-owner {
-    display: block !important;
-    width: auto !important;
-    margin: 0 !important;
-    text-align: left !important;
-  }
-
-  .archive-status-divider {
-    display: none !important;
-  }
-  .archive-header,
-  .archive-status-line {
-    justify-content: flex-start !important;
-    align-items: flex-start !important;
-  }
-  .archive-owner-whisper {
-     width: auto !important;
-     text-align: left !important;
-    }
 }
 
 @page {
@@ -618,8 +536,10 @@ html.is-printing .archive-download {
   }
 
   .archive-status {
-    font-size: 8.2pt;
-    letter-spacing: 0.14em;
+    font-size: 7.8pt;
+  letter-spacing: 0.16em;
+  font-weight: 400;
+  color: rgba(20, 20, 20, 0.42);
   }
 
   .archive-hero {
@@ -630,11 +550,11 @@ html.is-printing .archive-download {
 
   .archive-title {
   max-width: 8.8ch;
-  margin: 0 0 3.2mm;
-  font-size: 31pt;
-  line-height: 0.88;
+  margin: 0 0 4.2mm;
+  font-size: 40pt;
+  line-height: 0.86;
   font-weight: 300 !important;
-  letter-spacing: -0.018em;
+  letter-spacing: -0.022em;
   text-wrap: balance;
   word-break: keep-all;
   overflow-wrap: normal;
@@ -789,5 +709,3 @@ html.is-printing .archive-download {
     page-break-after: avoid !important;
   }
 }
-
-
