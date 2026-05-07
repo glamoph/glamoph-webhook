@@ -439,15 +439,16 @@ html.is-printing .archive-download {
   }
 
   .archive-title {
-    font-size: clamp(56px, 6.2vw, 82px);
-    line-height: 0.9;
-    letter-spacing: -0.045em;
-    font-weight: 300;
-    max-width: 7.8ch;
+    font-size: clamp(54px, 5.8vw, 76px);
+    line-height: 0.92;
+    letter-spacing: -0.035em;
+    font-weight: 300 !important;
+    max-width: 8.2ch;
 
     word-break: keep-all;
     overflow-wrap: normal;
     hyphens: none;
+    font-synthesis-weight: none;
   }
 }
 
