@@ -548,8 +548,8 @@ const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
     <!-- TEXT -->
     <tr>
       <td style="font-size:14px;line-height:1.9;padding-bottom:20px;">
-        この作品は、正式にアーカイブされました。<br />
-        その記録へのアクセスが開かれています。
+        ご購入いただいた作品のアーカイブが完了しました。<br />
+        以下より、コレクターレコードをご確認いただけます。
       </td>
     </tr>
 
@@ -692,8 +692,8 @@ function buildCollectorEmailText(record) {
     return [
       "GLAMOPH",
       "",
-      "この作品は、正式にアーカイブされました。",
-      "その記録へのアクセスが開かれています。",
+      "ご購入いただいた作品のアーカイブが完了しました。",
+      "以下より、コレクターレコードをご確認いただけます。",
       "",
       publicId,
       edition,
