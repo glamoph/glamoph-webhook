@@ -416,6 +416,88 @@ async function inlineImagesForPdf(html) {
   return result;
 }
 
+async function retryAsync(fn, options = {}) {
+  const retries = Number(options.retries || 3);
+  const delayMs = Number(options.delayMs || 2000);
+  const label = options.label || "operation";
+
+  let lastError;
+
+  for (let attempt = 1; attempt <= retries; attempt += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      console.error(`${label} failed ${attempt}/${retries}:`, error?.message || error);
+
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+
+  throw lastError;
+}
+
+async function generateAndUploadCertificatePdf(internalId, record, messagePrefix = "Create") {
+  if (!internalId) {
+    throw new Error("Missing internalId");
+  }
+
+  const pdfHtml = buildPdfHtml(record);
+
+  const pdfBase64 = await retryAsync(
+    () => generatePdfBase64(pdfHtml),
+    {
+      retries: 3,
+      delayMs: 2500,
+      label: `PDF generation for ${internalId}`,
+    }
+  );
+
+  await putFileBase64({
+    path: `records/${internalId}/certificate.pdf`,
+    base64Content: pdfBase64,
+    message: `${messagePrefix} record PDF: ${internalId}`,
+  });
+
+  return {
+    ok: true,
+    internalId,
+    pdfUrl: `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/certificate.pdf`,
+  };
+}
+
+async function resolveInternalIdForAdmin(inputId) {
+  const raw = String(inputId || "").trim();
+
+  if (!raw) {
+    throw new Error("Missing recordId");
+  }
+
+  const normalized = raw.toUpperCase();
+
+  // internalId 直指定の場合: GLA-XXXXXX-M-001-XXXXXXXX
+  if (/^GLA-[A-Z0-9]+-[SML]-\d{3}-[A-Z0-9]{8}$/.test(normalized)) {
+    return normalized;
+  }
+
+  // publicId 指定の場合: GLA-XXXXXX-M-001
+  if (/^GLA-[A-Z0-9]+-[SML]-\d{3}$/.test(normalized)) {
+    const logFile = await readJsonFile("records-log.json", {});
+    const recordsLog = normalizeMap(logFile?.data);
+    const internalId = String(recordsLog[normalized] || "").trim();
+
+    if (!internalId) {
+      throw new Error(`Record not found in records-log: ${normalized}`);
+    }
+
+    return internalId;
+  }
+
+  throw new Error("Invalid recordId format. Use publicId or internalId.");
+}
+
 async function generatePdfBase64(html) {
   const inlinedHtml = await inlineImagesForPdf(html);
 
