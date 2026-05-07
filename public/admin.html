@@ -1166,7 +1166,7 @@ if (el.regeneratePdfRecordId) {
           el.resendStatus.className = 'status';
 
           try {
-            const res = await fetch('https://verify.glamoph.com/admin/resend-collector-access', {
+            const res = await fetch('/admin/resend-collector-access', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
