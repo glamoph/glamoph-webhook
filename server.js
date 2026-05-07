@@ -889,19 +889,11 @@ async function createRecordFile(internalId, record) {
     message: `Create record page: ${internalId}`,
   });
 
-  try {
-    const pdfHtml = buildPdfHtml(record);
-    const pdfBase64 = await generatePdfBase64(pdfHtml);
-
-    await putFileBase64({
-      path: `records/${internalId}/certificate.pdf`,
-      base64Content: pdfBase64,
-      message: `Create record PDF: ${internalId}`,
-    });
+    try {
+    await generateAndUploadCertificatePdf(internalId, record, "Create");
   } catch (error) {
-    console.error("PDF generation failed:", error);
+    console.error("PDF generation failed:", internalId, error?.message || error);
   }
-}
 
 function normalizeOrderId(value) {
   return String(value || "").trim();
@@ -1491,6 +1483,77 @@ app.post(
   }
 );
 
+app.post(
+  "/admin/regenerate-pdf/:recordId",
+  express.json({ limit: "1mb" }),
+  async (req, res) => {
+    try {
+      const adminToken = String(req.get("x-admin-token") || req.query.token || "").trim();
+      const expectedToken = String(process.env.ADMIN_REISSUE_TOKEN || "").trim();
+
+      if (!expectedToken || adminToken !== expectedToken) {
+        return res.status(401).json({
+          ok: false,
+          error: "Unauthorized",
+        });
+      }
+
+      const inputRecordId = String(req.params.recordId || "").trim();
+
+      if (!inputRecordId) {
+        return res.status(400).json({
+          ok: false,
+          error: "Missing recordId",
+        });
+      }
+
+      const internalId = await resolveInternalIdForAdmin(inputRecordId);
+
+      const file = await readJsonFile(`records/${internalId}/data.json`, null);
+      const record = file?.data;
+
+      if (!record) {
+        return res.status(404).json({
+          ok: false,
+          error: "Record data not found",
+          internalId,
+        });
+      }
+
+      record.internalId = record.internalId || internalId;
+      record.permanentArchiveUrl =
+        record.permanentArchiveUrl ||
+        `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/`;
+      record.pdfUrl =
+        record.pdfUrl ||
+        `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/certificate.pdf`;
+      record.updatedAt = new Date().toISOString();
+
+      const result = await generateAndUploadCertificatePdf(
+        internalId,
+        record,
+        "Regenerate"
+      );
+
+      return res.status(200).json({
+        ok: true,
+        inputRecordId,
+        internalId,
+        archiveId: record.archiveId || "",
+        title: record.title || "",
+        pdfUrl: `${result.pdfUrl}?v=${Date.now()}`,
+      });
+    } catch (error) {
+      console.error("ADMIN REGENERATE PDF ERROR:", error);
+
+      return res.status(500).json({
+        ok: false,
+        error: error?.message || "Internal Server Error",
+      });
+    }
+  }
+);
+  
 app.get("/:recordId", async (req, res) => {
   const publicId = String(req.params.recordId || "").trim().toUpperCase();
 
