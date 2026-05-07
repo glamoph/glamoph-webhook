@@ -872,7 +872,7 @@ async function updateRecordsLog(publicId, internalId) {
 
 async function createRecordFile(internalId, record) {
   record.permanentArchiveUrl =
-  `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/`;
+    `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/`;
   record.pdfUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/certificate.pdf`;
 
   await writeJsonFile(
@@ -889,11 +889,12 @@ async function createRecordFile(internalId, record) {
     message: `Create record page: ${internalId}`,
   });
 
-    try {
+  try {
     await generateAndUploadCertificatePdf(internalId, record, "Create");
   } catch (error) {
     console.error("PDF generation failed:", internalId, error?.message || error);
   }
+}
 
 function normalizeOrderId(value) {
   return String(value || "").trim();
