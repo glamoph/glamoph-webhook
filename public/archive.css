@@ -232,13 +232,31 @@ button {
 }
 
 .archive-record__inner {
-  display: grid;
-  grid-template-columns: 160px minmax(0, 1fr);
-  gap: var(--record-gap);
+  display: block;
+  width: 100%;
 }
 
 .archive-record__heading-wrap {
-  padding-top: 2px;
+  display: none !important;
+}
+
+.archive-record__grid {
+  display: block;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.archive-record__row {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  align-items: start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
 }
 
 .archive-record__heading {
@@ -251,23 +269,11 @@ button {
   text-transform: uppercase;
 }
 
-.archive-record__grid {
-  margin: 0;
-  padding: 0;
-}
-
-.archive-record__row {
-  display: grid;
-  grid-template-columns: 160px minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--line);
-}
 
 .archive-record__row dt,
 .archive-record__row dd {
   margin: 0;
+  min-width: 0;
 }
 
 .archive-record__row dt {
@@ -441,17 +447,21 @@ html.is-printing .archive-download {
     margin-top: 34px;
   }
 
-  .archive-record__inner {
-  grid-template-columns: 1fr;
-  gap: 0;
+.archive-record__inner {
+  display: block;
+  width: 100%;
 }
 
 .archive-record__heading-wrap {
-  display: none;
+  display: none !important;
 }
 
 .archive-record__grid {
+  display: block;
   width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 
   .archive-record__row {
@@ -639,16 +649,20 @@ html.is-printing .archive-download {
   }
 
  .archive-record__inner {
-  grid-template-columns: 1fr;
-  gap: 0;
+  display: block;
+  width: 100%;
 }
 
 .archive-record__heading-wrap {
-  display: none;
+  display: none !important;
 }
 
 .archive-record__grid {
+  display: block;
   width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 
   .archive-record__heading {
@@ -657,19 +671,22 @@ html.is-printing .archive-download {
   }
 
   .archive-record__row {
-    grid-template-columns: 28mm minmax(0, 1fr);
-    gap: 3.5mm;
-    padding: 3.3mm 0;
-    border-bottom: none;
-    background-image: linear-gradient(
-      to bottom,
-      transparent calc(100% - 0.6px),
-      rgba(20, 20, 20, 0.04) calc(100% - 0.6px),
-      rgba(20, 20, 20, 0.04) 100%
-    );
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-  }
+  display: grid;
+  grid-template-columns: 28mm minmax(0, 1fr);
+  gap: 3.5mm;
+  width: 100%;
+  min-width: 0;
+  padding: 3.3mm 0;
+  border-bottom: none;
+  background-image: linear-gradient(
+    to bottom,
+    transparent calc(100% - 0.6px),
+    rgba(20, 20, 20, 0.04) calc(100% - 0.6px),
+    rgba(20, 20, 20, 0.04) 100%
+  );
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
 
   .archive-record__row dt {
     font-size: 7.1pt;
