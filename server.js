@@ -1149,7 +1149,7 @@ async function processOrderWebhook(order) {
     const ownerArchiveUrl = `${VERIFY_PUBLIC_BASE_URL}/${publicId}?t=${ownerToken}`;
 
     const record = {
-      verified: "Artwork Verified",
+      verified: "Archive Record",
       title,
       archiveId: publicId,
       internalId,
