@@ -1104,6 +1104,19 @@ title: document.getElementById('title'),
         });
       }
 
+      if (el.regeneratePdfBtn) {
+  el.regeneratePdfBtn.addEventListener('click', regeneratePdf);
+}
+
+if (el.regeneratePdfRecordId) {
+  el.regeneratePdfRecordId.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      regeneratePdf();
+    }
+  });
+}
+      
       [
         el.artworkCode,
         el.sku,
