@@ -553,12 +553,6 @@ const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
       </td>
     </tr>
 
-    <!-- CTA TEXT -->
-    <tr>
-      <td style="font-size:13px;padding-bottom:14px;">
-        コレクターレコードはこちらからご覧いただけます。
-      </td>
-    </tr>
 
     <!-- CTA BUTTON -->
     <tr>
@@ -576,7 +570,7 @@ const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
         text-align:center;
         border:1px solid #dddddd;
       ">
-      証明書を表示
+      コレクターレコードを表示
     </a>
   </td>
 </tr>
@@ -625,20 +619,20 @@ const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
         : ""
     }
 
-    <!-- TEXT -->
-    <tr>
-      <td style="font-size:14px;line-height:1.9;padding-bottom:20px;">
-        This artwork has been officially archived.<br />
-        Collector access has been granted.
-      </td>
-    </tr>
+   <!-- TEXT -->
+<tr>
+  <td style="font-size:14px;line-height:1.9;padding-bottom:20px;">
+    This artwork has been recorded in the GLAMOPH Archive.<br />
+    Your Collector Record is now available.
+  </td>
+</tr>
 
-    <!-- CTA TEXT -->
-    <tr>
-      <td style="font-size:13px;padding-bottom:14px;">
-        Access your private collector record below.
-      </td>
-    </tr>
+<!-- CTA TEXT -->
+<tr>
+  <td style="font-size:13px;padding-bottom:14px;">
+    View your Collector Record below.
+  </td>
+</tr>
 
     <!-- CTA BUTTON -->
    <tr>
@@ -689,33 +683,32 @@ function buildCollectorEmailText(record) {
   const edition = record.edition || "";
 
   if (isJa) {
-    return [
-      "GLAMOPH",
-      "",
-      "ご購入いただいた作品のアーカイブが完了しました。",
-      "以下より、コレクターレコードをご確認いただけます。",
-      "",
-      publicId,
-      edition,
-      "",
-      "コレクターレコードはこちらからご覧いただけます。",
-      ownerUrl,
-    ].join("\n");
-  }
-
   return [
     "GLAMOPH",
     "",
-    "This artwork has been officially archived.",
-    "Collector access has been granted.",
+    "作品は、GLAMOPH Archiveに記録されました。",
+    "",
+    "以下より、Collector Recordをご確認いただけます。",
     "",
     publicId,
     edition,
     "",
-    "Access your private collector record below.",
     ownerUrl,
   ].join("\n");
 }
+
+  return [
+  "GLAMOPH",
+  "",
+  "This artwork has been recorded in the GLAMOPH Archive.",
+  "",
+  "You can view the Collector Record below.",
+  "",
+  publicId,
+  edition,
+  "",
+  ownerUrl,
+].join("\n");
 
 async function sendCollectorAccessEmail(record) {
   const to = String(record.customerEmail || "").trim();
