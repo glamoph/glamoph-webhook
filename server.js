@@ -697,18 +697,19 @@ function buildCollectorEmailText(record) {
   ].join("\n");
 }
 
-  return [
-  "GLAMOPH",
-  "",
-  "This artwork has been recorded in the GLAMOPH Archive.",
-  "",
-  "You can view the Collector Record below.",
-  "",
-  publicId,
-  edition,
-  "",
-  ownerUrl,
-].join("\n");
+    return [
+    "GLAMOPH",
+    "",
+    "This artwork has been recorded in the GLAMOPH Archive.",
+    "",
+    "You can view the Collector Record below.",
+    "",
+    publicId,
+    edition,
+    "",
+    ownerUrl,
+  ].join("\n");
+}
 
 async function sendCollectorAccessEmail(record) {
   const to = String(record.customerEmail || "").trim();
