@@ -629,14 +629,18 @@ html.is-printing .archive-download {
   }
 
   .archive-title {
-    max-width: 8.6ch;
-    margin: 0 0 3.2mm;
-    font-size: 33pt;
-    line-height: 0.86;
-    font-weight: 300;
-    letter-spacing: -0.012em;
-    text-wrap: balance;
-  }
+  max-width: 8.8ch;
+  margin: 0 0 3.2mm;
+  font-size: 31pt;
+  line-height: 0.88;
+  font-weight: 300 !important;
+  letter-spacing: -0.018em;
+  text-wrap: balance;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  hyphens: none;
+  font-synthesis-weight: none;
+}
 
   .archive-meta-line {
     display: flex;
