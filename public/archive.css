@@ -181,11 +181,11 @@ button {
 
 .archive-title {
   font-family: "Cormorant Garamond", serif;
-  font-size: clamp(64px, 6.8vw, 104px);
-  line-height: 0.9;
-  letter-spacing: -0.045em;
-  font-weight: 300;
-  max-width: 7.8ch;
+  font-size: clamp(62px, 6.4vw, 96px);
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  font-weight: 300 !important;
+  max-width: 8.2ch;
   margin: 0;
 
   text-wrap: balance;
@@ -195,6 +195,7 @@ button {
 
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
+  font-synthesis-weight: none;
 }
 
 .archive-meta-line {
