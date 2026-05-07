@@ -264,10 +264,7 @@ function buildPageHtml(record, recordId, options = {}) {
 
       <section class="archive-record">
         <div class="archive-record__inner">
-          <div class="archive-record__heading-wrap">
-            <h2 class="archive-record__heading">Record</h2>
-          </div>
-
+         
           <dl class="archive-record__grid">
             <div class="archive-record__row">
               <dt>Title</dt>
