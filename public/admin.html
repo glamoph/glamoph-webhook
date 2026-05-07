@@ -1051,7 +1051,7 @@ regeneratePdfStatus: document.getElementById('regeneratePdfStatus')
 
   try {
     const res = await fetch(
-      `https://verify.glamoph.com/admin/regenerate-pdf/${encodeURIComponent(recordId)}`,
+  `/admin/regenerate-pdf/${encodeURIComponent(recordId)}`,
       {
         method: 'POST',
         headers: {
