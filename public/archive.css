@@ -137,7 +137,7 @@ button {
   letter-spacing: -0.035em;
   font-weight: 300 !important;
   max-width: 8.2ch;
-  margin: 0 0 12px;
+  margin: 0 0 16px;
 
   text-wrap: balance;
   word-break: keep-all;
@@ -572,7 +572,7 @@ html.is-printing .archive-download {
 
   .archive-title {
   max-width: 8.8ch;
-  margin: 0 0 5mm;
+  margin: 0 0 5.4mm;
   font-size: 40pt;
   line-height: 0.86;
   font-weight: 300 !important;
