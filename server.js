@@ -1101,7 +1101,14 @@ async function processOrderWebhook(order) {
   const orderId = order?.id;
   const orderName = order?.name || "";
   const createdAt = order?.created_at || new Date().toISOString();
-  const customerEmail = String(order?.email || order?.contact_email || "").trim();
+  const customerEmail = String(
+  order?.email ||
+  order?.contact_email ||
+  order?.customer?.email ||
+  order?.shipping_address?.email ||
+  order?.billing_address?.email ||
+  ""
+).trim();
   const customerFirstName = String(order?.customer?.first_name || "").trim();
   const customerLastName = String(order?.customer?.last_name || "").trim();
   const lineItems = Array.isArray(order?.line_items) ? order.line_items : [];
