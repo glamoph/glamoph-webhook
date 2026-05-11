@@ -1468,12 +1468,12 @@ app.post(
     res.status(200).send("ok");
 
     setImmediate(async () => {
-      try {
-        await processOrderWebhook(payload);
-      } catch (error) {
-        console.error("orders-create processing error:", error);
-      }
-    });
+  try {
+    await saveOrderContact(payload);
+  } catch (error) {
+    console.error("orders-create contact save error:", error);
+  }
+});
   }
 );
 
