@@ -1425,12 +1425,12 @@ app.post(
     res.status(200).send("ok");
 
     setImmediate(async () => {
-      try {
-        await processOrderWebhook(payload);
-      } catch (error) {
-        console.error("orders-paid processing error:", error);
-      }
-    });
+  try {
+    await saveOrderContact(payload);
+  } catch (error) {
+    console.error("orders-paid contact save error:", error);
+  }
+});
   }
 );
 
