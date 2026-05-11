@@ -857,6 +857,94 @@ async function updateIssuedIndex(lineItemId, payload) {
   );
 }
 
+async function getOrderContactIndex() {
+  const file = await readJsonFile("order-contact-index.json", {});
+  return normalizeMap(file.data);
+}
+
+function extractOrderContact(order) {
+  const email = String(
+    order?.email ||
+    order?.contact_email ||
+    order?.customer?.email ||
+    order?.shipping_address?.email ||
+    order?.billing_address?.email ||
+    ""
+  ).trim();
+
+  const firstName = String(
+    order?.customer?.first_name ||
+    order?.shipping_address?.first_name ||
+    order?.billing_address?.first_name ||
+    ""
+  ).trim();
+
+  const lastName = String(
+    order?.customer?.last_name ||
+    order?.shipping_address?.last_name ||
+    order?.billing_address?.last_name ||
+    ""
+  ).trim();
+
+  return {
+    email,
+    firstName,
+    lastName,
+  };
+}
+
+async function saveOrderContact(order) {
+  const orderId = normalizeOrderId(order?.id);
+  const orderName = String(order?.name || "").trim();
+  const contact = extractOrderContact(order);
+
+  if (!orderId) {
+    console.log("Skip contact save: no order id");
+    return;
+  }
+
+  if (!contact.email) {
+    console.log("Skip contact save: no email found", {
+      orderId,
+      orderName,
+      email: order?.email || "",
+      contact_email: order?.contact_email || "",
+      customer_email: order?.customer?.email || "",
+      shipping_email: order?.shipping_address?.email || "",
+      billing_email: order?.billing_address?.email || "",
+    });
+    return;
+  }
+
+  const current = await getOrderContactIndex();
+
+  current[orderId] = {
+    orderId,
+    orderName,
+    email: contact.email,
+    firstName: contact.firstName,
+    lastName: contact.lastName,
+    savedAt: new Date().toISOString(),
+  };
+
+  await writeJsonFile(
+    "order-contact-index.json",
+    current,
+    `Save order contact: ${orderName || orderId}`
+  );
+
+  console.log("Order contact saved:", {
+    orderId,
+    orderName,
+    email: contact.email,
+  });
+}
+
+async function getSavedOrderContact(orderId) {
+  const current = await getOrderContactIndex();
+  return current[normalizeOrderId(orderId)] || null;
+}
+
 async function updateRecordsLog(publicId, internalId) {
   const file = await readJsonFile("records-log.json", {});
   const current = normalizeMap(file.data);
