@@ -1219,8 +1219,6 @@ async function processOrderWebhook(order) {
     resolved: customerEmail,
   });
   
-  const customerFirstName = String(order?.customer?.first_name || "").trim();
-  const customerLastName = String(order?.customer?.last_name || "").trim();
   const lineItems = Array.isArray(order?.line_items) ? order.line_items : [];
 
   console.log("ORDER ID:", orderId);
