@@ -1109,6 +1109,16 @@ async function processOrderWebhook(order) {
   order?.billing_address?.email ||
   ""
 ).trim();
+
+  console.log("EMAIL DEBUG:", {
+  email: order?.email || "",
+  contact_email: order?.contact_email || "",
+  customer_email: order?.customer?.email || "",
+  shipping_email: order?.shipping_address?.email || "",
+  billing_email: order?.billing_address?.email || "",
+  resolved: customerEmail,
+});
+  
   const customerFirstName = String(order?.customer?.first_name || "").trim();
   const customerLastName = String(order?.customer?.last_name || "").trim();
   const lineItems = Array.isArray(order?.line_items) ? order.line_items : [];
