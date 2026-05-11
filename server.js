@@ -1361,6 +1361,69 @@ app.post(
 );
 
 app.post(
+  "/webhooks/fulfillments-create",
+  express.raw({ type: "application/json", limit: "2mb" }),
+  async (req, res) => {
+    console.log("WEBHOOK RECEIVED:", req.path);
+
+    const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body || "");
+    const hmac = req.get("X-Shopify-Hmac-Sha256") || "";
+
+    console.log("HMAC EXISTS:", Boolean(hmac));
+
+    let verified = false;
+
+    try {
+      verified = verifyShopifyWebhook(rawBody, hmac);
+    } catch (error) {
+      console.error("Webhook verification setup error:", error);
+      return res.status(500).send("Webhook secret error");
+    }
+
+    if (!verified) {
+      return res.status(401).send("Invalid webhook signature");
+    }
+
+    let payload;
+    try {
+      payload = JSON.parse(rawBody.toString("utf8"));
+    } catch (error) {
+      return res.status(400).send("Invalid JSON");
+    }
+
+    res.status(200).send("ok");
+
+    setImmediate(async () => {
+      try {
+        const orderId = payload?.order_id;
+
+        if (!orderId) {
+          console.log("fulfillments-create: missing order_id. Skip.");
+          return;
+        }
+
+        console.log("FULFILLMENT ORDER ID:", orderId);
+
+        const order = await fetchShopifyOrderForAdmin(orderId);
+
+        const fulfillmentStatus = String(order?.fulfillment_status || "").trim().toLowerCase();
+
+        console.log("ORDER FULFILLMENT STATUS:", fulfillmentStatus || "(empty)");
+
+        if (fulfillmentStatus !== "fulfilled") {
+          console.log("Order is not fully fulfilled yet. Skip certificate issue.");
+          return;
+        }
+
+        await processOrderWebhook(order);
+      } catch (error) {
+        console.error("fulfillments-create processing error:", error);
+      }
+    });
+  }
+);
+
+app.post(
   "/admin/reissue-order",
   express.json({ limit: "1mb" }),
   async (req, res) => {
