@@ -1189,23 +1189,35 @@ async function processOrderWebhook(order) {
   const orderId = order?.id;
   const orderName = order?.name || "";
   const createdAt = order?.created_at || new Date().toISOString();
+
+  const directContact = extractOrderContact(order);
+  const savedContact = await getSavedOrderContact(orderId);
+
   const customerEmail = String(
-  order?.email ||
-  order?.contact_email ||
-  order?.customer?.email ||
-  order?.shipping_address?.email ||
-  order?.billing_address?.email ||
-  ""
-).trim();
+    directContact.email ||
+    savedContact?.email ||
+    ""
+  ).trim();
+
+  const customerFirstName = String(
+    directContact.firstName ||
+    savedContact?.firstName ||
+    ""
+  ).trim();
+
+  const customerLastName = String(
+    directContact.lastName ||
+    savedContact?.lastName ||
+    ""
+  ).trim();
 
   console.log("EMAIL DEBUG:", {
-  email: order?.email || "",
-  contact_email: order?.contact_email || "",
-  customer_email: order?.customer?.email || "",
-  shipping_email: order?.shipping_address?.email || "",
-  billing_email: order?.billing_address?.email || "",
-  resolved: customerEmail,
-});
+    orderId,
+    orderName,
+    direct_email: directContact.email || "",
+    saved_email: savedContact?.email || "",
+    resolved: customerEmail,
+  });
   
   const customerFirstName = String(order?.customer?.first_name || "").trim();
   const customerLastName = String(order?.customer?.last_name || "").trim();
