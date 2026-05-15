@@ -339,13 +339,22 @@ function buildStaticPageHtml(record) {
 }
 
 function buildPdfHtml(record) {
-  return buildStaticPageHtml(record).replace(
-    "</head>",
-    `<style>
-      @page { size: A4; margin: 0; }
-      .archive-download { display: none !important; }
-    </style></head>`
-  );
+  const pdfUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${record.internalId}/certificate.pdf`;
+
+  return buildPageHtml(record, record.archiveId, { isOwner: true })
+    .replace('href="/archive.css"', `href="${ARCHIVE_ASSET_BASE_URL}/public/archive.css"`)
+    .replace('src="/assets/signature.png"', `src="${ARCHIVE_ASSET_BASE_URL}/public/assets/signature.png"`)
+    .replace(
+      '<button class="archive-download" type="button" onclick="window.print()">Download PDF</button>',
+      `<a class="archive-download" href="${pdfUrl}" target="_blank" rel="noopener noreferrer">Download PDF</a>`
+    )
+    .replace(
+      "</head>",
+      `<style>
+        @page { size: A4; margin: 0; }
+        .archive-download { display: none !important; }
+      </style></head>`
+    );
 }
 
 function resolveChromiumPath() {
