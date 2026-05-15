@@ -308,12 +308,16 @@ function buildPageHtml(record, recordId, options = {}) {
         </div>
       </section>
 
-      <footer class="archive-footer">
+            <footer class="archive-footer">
         <button class="archive-download" type="button" onclick="window.print()">Download PDF</button>
 
-        <div class="archive-signature-wrap">
-          <img class="archive-signature" src="/assets/signature.png" alt="GLAMOPH signature" />
-        </div>
+        ${
+          isOwner
+            ? `<div class="archive-signature-wrap">
+                 <img class="archive-signature" src="/assets/signature.png" alt="GLAMOPH signature" />
+               </div>`
+            : ""
+        }
       </footer>
 
     </section>
