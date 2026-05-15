@@ -243,8 +243,6 @@ function buildPageHtml(record, recordId, options = {}) {
   <div class="archive-status-line">
     <span class="archive-status">${safeVerified}</span>
   </div>
-
-  ${isOwner ? `<div class="archive-owner-whisper">Yours</div>` : ""}
 </header>
 
       <section class="archive-hero">
