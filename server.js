@@ -1344,8 +1344,8 @@ async function processOrderWebhook(order) {
     }
 
     const ownerToken = crypto.randomBytes(6).toString("hex");
-    const publicArchiveUrl = `${VERIFY_PUBLIC_BASE_URL}/${publicId}`;
-    const ownerArchiveUrl = `${VERIFY_PUBLIC_BASE_URL}/${publicId}?t=${ownerToken}`;
+    const publicArchiveUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/`;
+    const ownerArchiveUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/?t=${ownerToken}`;
 
     const record = {
       verified: "Archive Record",
