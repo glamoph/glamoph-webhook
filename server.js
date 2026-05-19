@@ -1391,17 +1391,17 @@ async function processOrderWebhook(order) {
   createdAt,
 });
 
-// 証明書メールは、発送通知の約1時間後に送信する
+// 証明書メールは、発送通知の約10分後に送信する
 setTimeout(async () => {
   try {
     await sendCollectorAccessEmail(record);
   } catch (error) {
     console.error("Delayed collector email error:", error);
   }
-}, 60 * 60 * 1000);
+}, 10 * 60 * 1000);
 
 console.log("Issued:", publicId, "=>", internalId);
-console.log("Collector email scheduled:", publicId, "in 60 minutes");
+console.log("Collector email scheduled:", publicId, "in 10 minutes");
   }
 }
 
