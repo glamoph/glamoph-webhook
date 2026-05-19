@@ -326,13 +326,38 @@ function buildPageHtml(record, recordId, options = {}) {
 
 function buildStaticPageHtml(record) {
   const pdfUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${record.internalId}/certificate.pdf`;
+  const ownerToken = escapeHtml(record.ownerToken || "");
 
-  return buildPageHtml(record, record.archiveId, { isOwner: false })
+  return buildPageHtml(record, record.archiveId, { isOwner: true })
     .replace('href="/archive.css"', `href="${ARCHIVE_ASSET_BASE_URL}/public/archive.css"`)
     .replace('src="/assets/signature.png"', `src="${ARCHIVE_ASSET_BASE_URL}/public/assets/signature.png"`)
     .replace(
       '<button class="archive-download" type="button" onclick="window.print()">Download PDF</button>',
       `<a class="archive-download" href="${pdfUrl}" target="_blank" rel="noopener noreferrer">Download PDF</a>`
+    )
+    .replace(
+      "</head>",
+      `<style>
+        .archive-signature-wrap {
+          display: none;
+        }
+
+        html.is-owner .archive-signature-wrap {
+          display: block;
+        }
+      </style>
+      <script>
+        (function () {
+          var params = new URLSearchParams(window.location.search);
+          var token = params.get("t") || "";
+          var ownerToken = "${ownerToken}";
+
+          if (token && ownerToken && token === ownerToken) {
+            document.documentElement.classList.add("is-owner");
+          }
+        })();
+      </script>
+      </head>`
     );
 }
 
