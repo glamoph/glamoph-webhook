@@ -631,7 +631,7 @@ const edition = escapeHtml(record.edition || "");
 const imageUrl = escapeHtml(resolveRecordImageUrl(record.image || ""));
 
   // ★ ロゴURL（ここ重要）
-  const logoUrl = "https://verify.glamoph.com/assets/email/logo.png";
+  const logoUrl = `${ARCHIVE_ASSET_BASE_URL}/public/assets/email/logo.png`;
 
   if (isJa) {
     return `<!DOCTYPE html>
