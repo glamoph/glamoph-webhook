@@ -30,6 +30,9 @@ app.get("/", (req, res) => {
   res.send("GLAMOPH Verify System");
 });
 
+// Legacy test endpoint.
+// Not used for the current Shopify certificate issuance flow.
+// Manual issuance should use /admin/reissue-order.
 app.post('/api/publish', express.json(), async (req, res) => {
   try {
     const {
