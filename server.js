@@ -1391,12 +1391,17 @@ async function processOrderWebhook(order) {
   createdAt,
 });
 
-// GitHub Pages の公開反映待ち
-await new Promise((resolve) => setTimeout(resolve, 30000));
-
-await sendCollectorAccessEmail(record);
+// 証明書メールは、発送通知の約1時間後に送信する
+setTimeout(async () => {
+  try {
+    await sendCollectorAccessEmail(record);
+  } catch (error) {
+    console.error("Delayed collector email error:", error);
+  }
+}, 60 * 60 * 1000);
 
 console.log("Issued:", publicId, "=>", internalId);
+console.log("Collector email scheduled:", publicId, "in 60 minutes");
   }
 }
 
