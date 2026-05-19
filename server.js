@@ -306,7 +306,7 @@ function buildPageHtml(record, recordId, options = {}) {
         </div>
       </section>
 
-                   <footer class="archive-footer">
+      <footer class="archive-footer">
         <button class="archive-download" type="button" onclick="window.print()">Download PDF</button>
 
         ${
