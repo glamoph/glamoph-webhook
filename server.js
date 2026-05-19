@@ -592,8 +592,9 @@ function buildCollectorEmailHtml(record) {
   const isJa = locale === "ja";
 
 const certificateUrl = escapeHtml(
-  record.permanentArchiveUrl ||
-  `${ARCHIVE_ASSET_BASE_URL}/records/${record.internalId}/`
+  record.ownerArchiveUrl ||
+  record.archiveUrl ||
+  `${VERIFY_PUBLIC_BASE_URL}/${record.archiveId || ""}`
 );
 
 const pdfUrl = escapeHtml(
