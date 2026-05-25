@@ -1054,6 +1054,7 @@ function requireAdminToken(statusEl) {
     return;
   }
 
+  if (!token) return;
 
   el.regeneratePdfBtn.disabled = true;
   el.regeneratePdfStatus.textContent = 'Regenerating PDF...';
