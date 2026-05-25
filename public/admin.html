@@ -1054,11 +1054,6 @@ function requireAdminToken(statusEl) {
     return;
   }
 
-  if (!token) {
-    el.regeneratePdfStatus.textContent = 'Missing Admin Token';
-    el.regeneratePdfStatus.className = 'status error';
-    return;
-  }
 
   el.regeneratePdfBtn.disabled = true;
   el.regeneratePdfStatus.textContent = 'Regenerating PDF...';
