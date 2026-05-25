@@ -1037,6 +1037,174 @@ async function findIssuedByOrderId(orderId) {
   });
 }
 
+
+async function issueCertificateForLineItem(order, item) {
+  const orderId = order?.id;
+  const orderName = order?.name || "";
+  const createdAt = order?.created_at || new Date().toISOString();
+
+  if (!orderId) {
+    throw new Error("Missing orderId");
+  }
+
+  const lineItemId = item?.id;
+
+  if (!lineItemId) {
+    throw new Error("Missing lineItemId");
+  }
+
+  const issuedIndex = await getIssuedIndex();
+
+  if (issuedIndex[String(lineItemId)]) {
+    const existing = issuedIndex[String(lineItemId)];
+
+    return {
+      ok: true,
+      skipped: true,
+      reason: "Already issued",
+      record: existing,
+    };
+  }
+
+  if (!isArtworkLineItem(item)) {
+    throw new Error("Selected line item is not an artwork item");
+  }
+
+  const sku = String(item?.sku || "").trim().toUpperCase();
+  const productId = item?.product_id;
+  const title = String(item?.title || "").trim();
+  const variantTitle = String(item?.variant_title || "").trim().toUpperCase();
+
+  if (!sku) {
+    throw new Error("Selected line item has no SKU");
+  }
+
+  const parsed = parseSku(sku);
+
+  if (!parsed.valid) {
+    throw new Error(`Invalid SKU format: ${sku}`);
+  }
+
+  const artworkCode = parsed.artworkCode;
+  let sizeCode = parsed.sizeCode;
+  const frameCode = parsed.frameCode;
+
+  if (!sizeCode) {
+    if (/\bS\b/.test(variantTitle)) sizeCode = "S";
+    else if (/\bM\b/.test(variantTitle)) sizeCode = "M";
+    else if (/\bL\b/.test(variantTitle)) sizeCode = "L";
+  }
+
+  if (!artworkCode || !sizeCode) {
+    throw new Error("Could not resolve artworkCode / size from selected item");
+  }
+
+  if (!productId) {
+    throw new Error("Selected line item has no product_id");
+  }
+
+  const directContact = extractOrderContact(order);
+  const savedContact = await getSavedOrderContact(orderId);
+
+  const customerEmail = String(
+    directContact.email ||
+    savedContact?.email ||
+    ""
+  ).trim();
+
+  const customerFirstName = String(
+    directContact.firstName ||
+    savedContact?.firstName ||
+    ""
+  ).trim();
+
+  const customerLastName = String(
+    directContact.lastName ||
+    savedContact?.lastName ||
+    ""
+  ).trim();
+
+  const { editionNumber, editionTotal } = await getNextEdition({
+    artworkCode,
+    sizeCode,
+  });
+
+  const publicId = buildPublicId({
+    artworkCode,
+    sizeCode,
+    editionNumber,
+  });
+
+  const internalId = buildInternalId(publicId);
+
+  let imageResult = {
+    filePath: `images/${artworkCode}.jpg`,
+  };
+
+  try {
+    const syncedImage = await syncProductFeaturedImageToGitHub(productId, artworkCode);
+    if (syncedImage?.filePath) imageResult = syncedImage;
+  } catch (error) {
+    console.error("Image sync failed:", error);
+  }
+
+  const ownerToken = crypto.randomBytes(6).toString("hex");
+  const publicArchiveUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/`;
+  const ownerArchiveUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/?t=${ownerToken}`;
+
+  const record = {
+    verified: "Archive Record",
+    title,
+    archiveId: publicId,
+    internalId,
+    edition: `${pad2(editionNumber)} / ${editionTotal}`,
+    editionNumber,
+    editionTotal,
+    artist: "GLAMOPH",
+    medium: "Giclée print on museum-quality fine art paper",
+    size: resolveSizeLabel(sizeCode),
+    frame: frameCode === "BLK" ? "Black" : "White",
+    archiveDate: formatArchiveDate(createdAt),
+    archiveUrl: publicArchiveUrl,
+    ownerArchiveUrl,
+    image: `/${imageResult.filePath}`,
+    artworkCode,
+    sizeCode,
+    shopifyOrderId: orderId,
+    orderName,
+    lineItemId,
+    sku,
+    createdAt,
+    updatedAt: new Date().toISOString(),
+    ownerToken,
+    customerEmail,
+    customerFirstName,
+    customerLastName,
+    locale: String(order?.customer_locale || order?.locale || "").trim().toLowerCase(),
+    shippingCountryCode: String(order?.shipping_address?.country_code || "").trim().toUpperCase(),
+    billingCountryCode: String(order?.billing_address?.country_code || "").trim().toUpperCase(),
+  };
+
+  await createRecordFile(internalId, record);
+  await updateRecordsLog(publicId, internalId);
+
+  await updateIssuedIndex(lineItemId, {
+    publicId,
+    internalId,
+    orderId,
+    orderName,
+    sku,
+    createdAt,
+  });
+
+  return {
+    ok: true,
+    skipped: false,
+    record,
+  };
+}
+
+
 async function resendCollectorAccessByOrderId(orderId) {
   const existing = await findIssuedByOrderId(orderId);
 
