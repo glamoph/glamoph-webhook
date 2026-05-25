@@ -1157,7 +1157,7 @@ if (el.regeneratePdfRecordId) {
       if (el.resendBtn) {
         el.resendBtn.addEventListener('click', async () => {
           const orderId = String(el.resendOrderId.value || '').trim();
-          const token = String(el.resendAdminToken.value || '').trim();
+          const token = requireAdminToken(el.resendStatus);
 
           if (!orderId) {
             el.resendStatus.textContent = 'Missing orderId';
