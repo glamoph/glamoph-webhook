@@ -1764,6 +1764,74 @@ app.post(
 );
 
 app.post(
+  "/admin/reissue-line-item",
+  express.json({ limit: "1mb" }),
+  async (req, res) => {
+    try {
+      const adminToken = String(req.get("x-admin-token") || req.query.token || "").trim();
+      const expectedToken = String(process.env.ADMIN_REISSUE_TOKEN || "").trim();
+
+      if (!expectedToken || adminToken !== expectedToken) {
+        return res.status(401).json({
+          ok: false,
+          error: "Unauthorized",
+        });
+      }
+
+      const orderId = normalizeOrderId(req.body?.orderId);
+      const lineItemId = String(req.body?.lineItemId || "").trim();
+
+      if (!orderId) {
+        return res.status(400).json({
+          ok: false,
+          error: "Missing orderId",
+        });
+      }
+
+      if (!lineItemId) {
+        return res.status(400).json({
+          ok: false,
+          error: "Missing lineItemId",
+        });
+      }
+
+      const order = await fetchShopifyOrderForAdmin(orderId);
+      const lineItems = Array.isArray(order?.line_items) ? order.line_items : [];
+
+      const item = lineItems.find((lineItem) => {
+        return String(lineItem?.id || "") === lineItemId;
+      });
+
+      if (!item) {
+        return res.status(404).json({
+          ok: false,
+          error: "Line item not found in this order",
+        });
+      }
+
+      const result = await issueCertificateForLineItem(order, item);
+
+      return res.status(200).json({
+        ok: true,
+        orderId: String(order.id),
+        orderName: String(order.name || ""),
+        lineItemId,
+        skipped: Boolean(result.skipped),
+        reason: result.reason || "",
+        record: result.record,
+      });
+    } catch (error) {
+      console.error("ADMIN REISSUE LINE ITEM ERROR:", error);
+
+      return res.status(500).json({
+        ok: false,
+        error: error?.message || "Internal Server Error",
+      });
+    }
+  }
+);
+
+app.post(
   "/admin/reissue-order",
   express.json({ limit: "1mb" }),
   async (req, res) => {
