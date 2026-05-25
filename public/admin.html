@@ -1040,9 +1040,10 @@ function selectOrderDraft(index) {
 
         const data = await fetchJson(`/admin/order-detail?orderId=${encodeURIComponent(orderId)}`);
 
-        applyOrderDraftToForm(data.draft);
+const drafts = Array.isArray(data.drafts) ? data.drafts : (data.draft ? [data.draft] : []);
+renderOrderDrafts(drafts);
 
-        el.orderLoadStatus.textContent = `Loaded ${data.order?.name || orderId} successfully.`;
+el.orderLoadStatus.textContent = `Loaded ${data.order?.name || orderId}: ${drafts.length} artwork item(s).`;
         el.orderLoadStatus.className = 'status success';
         setStatus('');
       } catch (error) {
