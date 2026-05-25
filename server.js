@@ -1217,7 +1217,7 @@ app.get("/admin/order-detail", async (req, res) => {
     }
 
     const order = await fetchShopifyOrderForAdmin(orderId);
-    const draft = buildAdminDraftFromOrder(order);
+    const drafts = buildAdminDraftsFromOrder(order);
 
     return res.status(200).json({
       ok: true,
@@ -1225,7 +1225,8 @@ app.get("/admin/order-detail", async (req, res) => {
         id: String(order.id),
         name: String(order.name || ""),
       },
-      draft,
+      drafts,
+      draft: drafts[0] || null,
     });
   } catch (error) {
     console.error("ADMIN ORDER DETAIL ERROR:", error);
