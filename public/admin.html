@@ -722,9 +722,11 @@
     };
 
     const state = {
-      latestResult: null,
-      lastArchiveUrl: ''
-    };
+  latestResult: null,
+  lastArchiveUrl: '',
+  orderDrafts: [],
+  selectedDraftIndex: -1
+};
 
     const el = {
       configChip: document.getElementById('configChip'),
