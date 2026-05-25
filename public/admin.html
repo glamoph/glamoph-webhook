@@ -1077,42 +1077,74 @@ el.orderLoadStatus.textContent = `Loaded ${data.order?.name || orderId}: ${draft
     }
 
     async function publishRecord(event) {
-      event.preventDefault();
+  event.preventDefault();
 
-      const payload = collectPayload();
+  const token = requireAdminToken(el.status);
+  if (!token) return;
 
-      if (!payload.artworkCode) {
-        setStatus('Artwork Code is required.', 'error');
-        return;
-      }
+  const selectedDraft = state.orderDrafts[state.selectedDraftIndex];
 
-      if (!payload.title) {
-        setStatus('Title is required.', 'error');
-        return;
-      }
+  if (!selectedDraft) {
+    setStatus('Load an order and select one artwork first.', 'error');
+    return;
+  }
 
-      try {
-        setBusy(true);
-        setStatus('Publishing to GitHub…');
+  if (!selectedDraft.orderId || !selectedDraft.lineItemId) {
+    setStatus('Missing orderId or lineItemId. Reload the order and select artwork again.', 'error');
+    return;
+  }
 
-        const result = await fetchJson('/api/publish', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+  try {
+    setBusy(true);
+    setStatus('Issuing selected certificate…');
 
-        state.latestResult = result;
-        state.lastArchiveUrl = result.record && result.record.archiveUrl ? result.record.archiveUrl : '';
-        renderJsonOutput(result);
-        renderPreview(result.record || buildPreviewDraft());
+    const result = await fetchJson('/admin/reissue-line-item', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-token': token
+      },
+      body: JSON.stringify({
+        orderId: selectedDraft.orderId,
+        lineItemId: selectedDraft.lineItemId
+      })
+    });
 
-        setStatus(`Published ${result.record.artworkId} successfully.`, 'success');
-      } catch (error) {
-        setStatus(error.message, 'error');
-      } finally {
-        setBusy(false);
-      }
+    state.latestResult = result;
+    state.lastArchiveUrl =
+      result.record?.ownerArchiveUrl ||
+      result.record?.archiveUrl ||
+      result.record?.permanentArchiveUrl ||
+      '';
+
+    renderJsonOutput(result);
+
+    if (result.record) {
+      renderPreview({
+        verified: result.record.verified || 'Archive Record',
+        title: result.record.title || selectedDraft.title,
+        artworkId: result.record.archiveId || '',
+        edition: result.record.edition || '',
+        artist: result.record.artist || 'GLAMOPH',
+        frame: result.record.frame || selectedDraft.frame,
+        size: result.record.size || selectedDraft.size,
+        medium: result.record.medium || selectedDraft.medium,
+        archiveUrl: result.record.archiveUrl || result.record.permanentArchiveUrl || '',
+        image: result.record.image || selectedDraft.image
+      });
     }
+
+    if (result.skipped) {
+      setStatus(`Already issued: ${result.record?.publicId || result.record?.archiveId || selectedDraft.title}`, 'success');
+    } else {
+      setStatus(`Issued ${result.record?.archiveId || selectedDraft.title} successfully.`, 'success');
+    }
+  } catch (error) {
+    setStatus(error.message, 'error');
+  } finally {
+    setBusy(false);
+  }
+}
 
     async function copyJson() {
       if (!state.latestResult || !state.latestResult.record) return;
