@@ -937,7 +937,79 @@ function requireAdminToken(statusEl) {
       el.jsonOutput.textContent = JSON.stringify(result.record, null, 2);
       renderResultMeta(result);
     }
+    function renderOrderDrafts(drafts) {
+  state.orderDrafts = Array.isArray(drafts) ? drafts : [];
+  state.selectedDraftIndex = -1;
 
+  if (!state.orderDrafts.length) {
+    el.orderItemsBlock.hidden = true;
+    el.orderItemsList.innerHTML = '';
+    return;
+  }
+
+  el.orderItemsBlock.hidden = false;
+
+  el.orderItemsList.innerHTML = state.orderDrafts.map((draft, index) => {
+    const disabled = draft.valid ? '' : ' disabled';
+    const opacity = draft.valid ? '1' : '0.45';
+
+    return `
+      <button
+        class="button"
+        type="button"
+        data-draft-index="${index}"
+        style="
+          width:100%;
+          justify-content:flex-start;
+          text-align:left;
+          border-radius:16px;
+          min-height:auto;
+          padding:14px 16px;
+          opacity:${opacity};
+        "
+        ${disabled}
+      >
+        <span style="display:block;font-size:14px;">
+          ${escapeHtml(draft.title || 'Untitled')}
+        </span>
+        <span class="mono" style="display:block;margin-top:5px;color:var(--muted);">
+          ${escapeHtml(draft.size || '')}
+          ${draft.frame ? ' / ' + escapeHtml(draft.frame) : ''}
+          ${draft.sku ? ' — ' + escapeHtml(draft.sku) : ''}
+        </span>
+      </button>
+    `;
+  }).join('');
+
+  el.orderItemsList.querySelectorAll('[data-draft-index]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const index = Number(button.getAttribute('data-draft-index'));
+      selectOrderDraft(index);
+    });
+  });
+
+  const firstValidIndex = state.orderDrafts.findIndex((draft) => draft.valid);
+
+  if (firstValidIndex >= 0) {
+    selectOrderDraft(firstValidIndex);
+  }
+}
+
+function selectOrderDraft(index) {
+  const draft = state.orderDrafts[index];
+
+  if (!draft || !draft.valid) return;
+
+  state.selectedDraftIndex = index;
+
+  el.orderItemsList.querySelectorAll('[data-draft-index]').forEach((button) => {
+    const isSelected = Number(button.getAttribute('data-draft-index')) === index;
+    button.style.borderColor = isSelected ? 'rgba(19,19,19,0.45)' : 'var(--line)';
+    button.style.background = isSelected ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.78)';
+  });
+
+  applyOrderDraftToForm(draft);
+}
     function applyOrderDraftToForm(draft) {
       if (!draft) return;
 
