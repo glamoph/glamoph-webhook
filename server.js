@@ -1085,8 +1085,10 @@ async function resendCollectorAccessByOrderId(orderId) {
   };
 }
 
-function buildAdminDraftFromOrder(order) {
-  const lineItems = Array.isArray(order?.line_items) ? order.line_items : [];
+function isArtworkLineItem(item) {
+  const sku = String(item?.sku || "").trim().toUpperCase();
+  const title = String(item?.title || "").trim();
+  const variantTitle = String(item?.variant_title || "").trim().toUpperCase();
 
   const nonArtworkKeywords = [
     "LENS-PROTECT",
@@ -1096,26 +1098,18 @@ function buildAdminDraftFromOrder(order) {
     "PREM",
   ];
 
-  const artworkItem = lineItems.find((item) => {
-    const sku = String(item?.sku || "").trim().toUpperCase();
-    const title = String(item?.title || "").trim();
-    const variantTitle = String(item?.variant_title || "").trim().toUpperCase();
+  const looksLikeNonArtwork =
+    nonArtworkKeywords.some((kw) => sku.includes(kw)) ||
+    nonArtworkKeywords.some((kw) => variantTitle.includes(kw)) ||
+    /protect|case|leather/i.test(title);
 
-    const looksLikeNonArtwork =
-      nonArtworkKeywords.some((kw) => sku.includes(kw)) ||
-      nonArtworkKeywords.some((kw) => variantTitle.includes(kw)) ||
-      /protect|case|leather/i.test(title);
+  return !looksLikeNonArtwork;
+}
 
-    return !looksLikeNonArtwork;
-  });
-
-  if (!artworkItem) {
-    throw new Error("No artwork line item found in this order");
-  }
-
-  const sku = String(artworkItem?.sku || "").trim().toUpperCase();
-  const title = String(artworkItem?.title || "").trim();
-  const variantTitle = String(artworkItem?.variant_title || "").trim().toUpperCase();
+function buildAdminDraftFromLineItem(order, item) {
+  const sku = String(item?.sku || "").trim().toUpperCase();
+  const title = String(item?.title || "").trim();
+  const variantTitle = String(item?.variant_title || "").trim().toUpperCase();
 
   let artworkCode = "";
   let sizeCode = "";
@@ -1123,6 +1117,7 @@ function buildAdminDraftFromOrder(order) {
 
   if (sku) {
     const parsed = parseSku(sku);
+
     if (parsed.valid) {
       artworkCode = parsed.artworkCode;
       sizeCode = parsed.sizeCode;
@@ -1136,23 +1131,39 @@ function buildAdminDraftFromOrder(order) {
     else if (/\bL\b/.test(variantTitle)) sizeCode = "L";
   }
 
-  if (!artworkCode || !sizeCode) {
-    throw new Error("Could not resolve artworkCode / size from this order");
-  }
-
   return {
     orderId: String(order?.id || ""),
     orderName: String(order?.name || ""),
-    lineItemId: String(artworkItem?.id || ""),
+    lineItemId: String(item?.id || ""),
+    productId: item?.product_id ? String(item.product_id) : "",
     sku,
     artworkCode,
     size: sizeCode,
     title,
-    image: `https://glamoph.github.io/glamoph-archive/images/${artworkCode}.jpg`,
+    image: artworkCode
+      ? `https://glamoph.github.io/glamoph-archive/images/${artworkCode}.jpg`
+      : "",
     artist: "GLAMOPH",
     frame: frameCode === "WHT" ? "White" : "Black",
     medium: "Giclée print on museum-quality fine art paper",
+    variantTitle: String(item?.variant_title || ""),
+    quantity: Number(item?.quantity || 1),
+    valid: Boolean(artworkCode && sizeCode && title && sku),
   };
+}
+
+function buildAdminDraftsFromOrder(order) {
+  const lineItems = Array.isArray(order?.line_items) ? order.line_items : [];
+
+  const drafts = lineItems
+    .filter(isArtworkLineItem)
+    .map((item) => buildAdminDraftFromLineItem(order, item));
+
+  if (!drafts.length) {
+    throw new Error("No artwork line item found in this order");
+  }
+
+  return drafts;
 }
 
 async function fetchShopifyOrderForAdmin(orderId) {
