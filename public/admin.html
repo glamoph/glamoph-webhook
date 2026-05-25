@@ -1165,11 +1165,6 @@ if (el.regeneratePdfRecordId) {
             return;
           }
 
-          if (!token) {
-            el.resendStatus.textContent = 'Missing admin token';
-            el.resendStatus.className = 'status error';
-            return;
-          }
 
           el.resendBtn.disabled = true;
           el.resendStatus.textContent = 'Sending...';
