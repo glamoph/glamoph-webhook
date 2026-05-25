@@ -874,9 +874,9 @@ regeneratePdfStatus: document.getElementById('regeneratePdfStatus')
       el.publishBtn.disabled = isBusy;
     }
 
-    function getAdminToken() {
+   function getAdminToken() {
   return String(el.adminToken?.value || '').trim();
-　　}
+}
 
 function requireAdminToken(statusEl) {
   const token = getAdminToken();
