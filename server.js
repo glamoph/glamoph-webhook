@@ -1384,7 +1384,7 @@ async function processOrderWebhook(order) {
       editionNumber,
       editionTotal,
       artist: "GLAMOPH",
-      medium: "Archival pigment print on fine art paper",
+      medium: "Giclée print on museum-quality fine art paper",
       size: resolveSizeLabel(sizeCode),
       frame: frameCode === "BLK" ? "Black" : "White",
       archiveDate: formatArchiveDate(createdAt),
