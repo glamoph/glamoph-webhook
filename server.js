@@ -71,7 +71,7 @@ app.post('/api/publish', express.json(), async (req, res) => {
       artworkId,
       edition: `Edition ${String(edition).padStart(2, '0')} / ${total}`,
       artist: artist || "GLAMOPH",
-      medium: medium || "Archival pigment print on fine art paper",
+      medium: medium || "Giclée print on museum-quality fine art paper",
       size: size,
       frame: frame || "Black",
       archiveUrl: `${VERIFY_PUBLIC_BASE_URL}/${artworkId}`,
