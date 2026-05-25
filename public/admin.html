@@ -1165,6 +1165,7 @@ if (el.regeneratePdfRecordId) {
             return;
           }
 
+          if (!token) return;
 
           el.resendBtn.disabled = true;
           el.resendStatus.textContent = 'Sending...';
