@@ -495,7 +495,13 @@
           <h2 class="panel-title">Publish Certificate</h2>
           <p class="panel-subtitle">Generate a public archive record and push <span class="mono">data.json</span> directly to GitHub Pages.</p>
 
-          <form id="publishForm" class="field-grid" autocomplete="off">
+<div class="field" style="margin-bottom:18px;">
+  <label for="adminToken">Admin Token</label>
+  <input id="adminToken" type="password" placeholder="ADMIN_REISSUE_TOKEN" />
+  <div class="hint">Used for admin actions such as resending collector access and regenerating PDFs.</div>
+</div>
+
+<form id="publishForm" class="field-grid" autocomplete="off">
             <div class="field-row-2">
   <div class="field">
     <label for="loadOrderId">Order ID</label>
