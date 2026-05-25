@@ -927,16 +927,18 @@ function requireAdminToken(statusEl) {
       `).join('');
     }
 
-           function renderJsonOutput(result) {
-      if (!result) {
-        el.jsonOutput.textContent = 'No publish yet.';
-        renderResultMeta(null);
-        return;
-      }
+      function renderJsonOutput(result) {
+  if (!result) {
+    el.jsonOutput.textContent = 'No publish yet.';
+    renderResultMeta(null);
+    return;
+  }
 
-      el.jsonOutput.textContent = JSON.stringify(result.record, null, 2);
-      renderResultMeta(result);
-    }
+  const output = result.record || result;
+
+  el.jsonOutput.textContent = JSON.stringify(output, null, 2);
+  renderResultMeta(result);
+}
     function renderOrderDrafts(drafts) {
   state.orderDrafts = Array.isArray(drafts) ? drafts : [];
   state.selectedDraftIndex = -1;
