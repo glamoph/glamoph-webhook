@@ -1151,7 +1151,7 @@ function buildAdminDraftFromOrder(order) {
     image: `https://glamoph.github.io/glamoph-archive/images/${artworkCode}.jpg`,
     artist: "GLAMOPH",
     frame: frameCode === "WHT" ? "White" : "Black",
-    medium: "Archival pigment print on fine art paper",
+    medium: "Giclée print on museum-quality fine art paper",
   };
 }
 
