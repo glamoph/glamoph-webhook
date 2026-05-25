@@ -1044,9 +1044,9 @@ function requireAdminToken(statusEl) {
       window.open(state.lastArchiveUrl, '_blank', 'noopener,noreferrer');
     }
 
-    async function regeneratePdf() {
+   async function regeneratePdf() {
   const recordId = String(el.regeneratePdfRecordId?.value || '').trim();
-  const token = String(el.resendAdminToken?.value || '').trim();
+  const token = requireAdminToken(el.regeneratePdfStatus);
 
   if (!recordId) {
     el.regeneratePdfStatus.textContent = 'Missing Record ID';
