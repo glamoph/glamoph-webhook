@@ -1577,6 +1577,17 @@ async function processOrderWebhook(order) {
   const orderName = order?.name || "";
   const createdAt = order?.created_at || new Date().toISOString();
 
+  const testCheck = detectTestOrder(order);
+
+  if (testCheck.isTest) {
+    console.log("Test order detected. Skip certificate issue.", {
+      orderId,
+      orderName,
+      reasons: testCheck.reasons,
+    });
+    return;
+  }
+
   const directContact = extractOrderContact(order);
   const savedContact = await getSavedOrderContact(orderId);
 
