@@ -1162,6 +1162,8 @@ async function issueCertificateForLineItem(order, item) {
     throw new Error("Selected line item has no product_id");
   }
 
+  const trackingInfo = extractTrackingInfoFromOrder(order);
+
   const directContact = extractOrderContact(order);
   const savedContact = await getSavedOrderContact(orderId);
 
