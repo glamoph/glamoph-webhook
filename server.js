@@ -1398,17 +1398,6 @@ function buildAdminDraftsFromOrder(order) {
   return drafts;
 }
 
-  const drafts = lineItems
-    .filter(isArtworkLineItem)
-    .map((item) => buildAdminDraftFromLineItem(order, item));
-
-  if (!drafts.length) {
-    throw new Error("No artwork line item found in this order");
-  }
-
-  return drafts;
-}
-
 async function fetchShopifyOrderForAdmin(orderId) {
   const shop = String(process.env.SHOPIFY_STORE_DOMAIN || "").trim();
   const adminTokenValue = String(process.env.SHOPIFY_ADMIN_ACCESS_TOKEN || "").trim();
