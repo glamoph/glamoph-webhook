@@ -1028,6 +1028,65 @@ function normalizeOrderId(value) {
   return String(value || "").trim();
 }
 
+function extractTrackingInfoFromFulfillment(fulfillment) {
+  const trackingNumbers = Array.isArray(fulfillment?.tracking_numbers)
+    ? fulfillment.tracking_numbers.filter(Boolean)
+    : [];
+
+  const trackingUrls = Array.isArray(fulfillment?.tracking_urls)
+    ? fulfillment.tracking_urls.filter(Boolean)
+    : [];
+
+  const trackingNumber = String(
+    fulfillment?.tracking_number ||
+    trackingNumbers[0] ||
+    ""
+  ).trim();
+
+  const trackingUrl = String(
+    fulfillment?.tracking_url ||
+    trackingUrls[0] ||
+    ""
+  ).trim();
+
+  const trackingCompany = String(
+    fulfillment?.tracking_company ||
+    ""
+  ).trim();
+
+  return {
+    trackingNumber,
+    trackingUrl,
+    trackingCompany,
+    hasTracking: Boolean(trackingNumber),
+  };
+}
+
+function extractTrackingInfoFromOrder(order) {
+  const fulfillments = Array.isArray(order?.fulfillments)
+    ? order.fulfillments
+    : [];
+
+  for (const fulfillment of fulfillments) {
+    const info = extractTrackingInfoFromFulfillment(fulfillment);
+
+    if (info.hasTracking) {
+      return info;
+    }
+  }
+
+  return {
+    trackingNumber: "",
+    trackingUrl: "",
+    trackingCompany: "",
+    hasTracking: false,
+  };
+}
+
+function orderHasTrackingNumber(order) {
+  return extractTrackingInfoFromOrder(order).hasTracking;
+}
+
 async function findIssuedByOrderId(orderId) {
   const file = await readJsonFile("issued-index.json", {});
   const issuedIndex = normalizeMap(file.data);
