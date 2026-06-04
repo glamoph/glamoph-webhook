@@ -1823,11 +1823,18 @@ app.post(
         const order = await fetchShopifyOrderForAdmin(orderId);
 
         const fulfillmentStatus = String(order?.fulfillment_status || "").trim().toLowerCase();
+        const trackingInfo = extractTrackingInfoFromOrder(order);
 
         console.log("ORDER FULFILLMENT STATUS:", fulfillmentStatus || "(empty)");
+        console.log("ORDER TRACKING INFO:", trackingInfo);
 
         if (fulfillmentStatus !== "fulfilled") {
           console.log("Order is not fully fulfilled yet. Skip certificate issue.");
+          return;
+        }
+
+        if (!trackingInfo.hasTracking) {
+          console.log("Order is fulfilled but tracking number is missing. Skip certificate issue.");
           return;
         }
 
