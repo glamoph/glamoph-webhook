@@ -2432,6 +2432,22 @@ app.get("/:recordId", async (req, res) => {
   }
 });
 
+const MAIL_QUEUE_INTERVAL_MS = Number(
+  process.env.MAIL_QUEUE_INTERVAL_MS || 60 * 1000
+);
+
+setInterval(() => {
+  processMailQueue().catch((error) => {
+    console.error("Mail queue interval error:", error);
+  });
+}, MAIL_QUEUE_INTERVAL_MS);
+
+setTimeout(() => {
+  processMailQueue().catch((error) => {
+    console.error("Mail queue startup error:", error);
+  });
+}, 5000);
+
 app.listen(PORT, () => {
   console.log(`GLAMOPH verify listening on :${PORT}`);
 });
