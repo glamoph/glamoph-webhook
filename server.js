@@ -855,6 +855,175 @@ async function sendCollectorAccessEmail(record) {
 
   console.log("Collector email sent:", to, record.archiveId, `locale=${resolveEmailLocale(record)}`);
 }
+
+async function getMailQueue() {
+  const file = await readJsonFile("mail-queue.json", {});
+  return normalizeMap(file.data);
+}
+
+async function writeMailQueue(queue, message = "Update mail queue") {
+  await writeJsonFile("mail-queue.json", queue, message);
+}
+
+async function enqueueCollectorAccessEmail(record, delayMs = 10 * 60 * 1000) {
+  const internalId = String(record?.internalId || "").trim();
+
+  if (!internalId) {
+    console.log("Skip enqueue collector email: missing internalId");
+    return;
+  }
+
+  const queueId = `collector:${internalId}`;
+  const queue = await getMailQueue();
+  const existing = queue[queueId];
+
+  if (existing?.sentAt) {
+    console.log("Collector email already sent. Skip enqueue:", queueId);
+    return;
+  }
+
+  if (existing && !existing.sentAt) {
+    console.log("Collector email already queued. Skip enqueue:", queueId);
+    return;
+  }
+
+  const scheduledAt = new Date(Date.now() + delayMs).toISOString();
+
+  queue[queueId] = {
+    type: "collector_access",
+    status: "pending",
+    internalId,
+    archiveId: String(record?.archiveId || ""),
+    orderId: normalizeOrderId(record?.shopifyOrderId || record?.orderId || ""),
+    orderName: String(record?.orderName || ""),
+    lineItemId: String(record?.lineItemId || ""),
+    customerEmail: String(record?.customerEmail || "").trim(),
+    scheduledAt,
+    createdAt: new Date().toISOString(),
+    attempts: 0,
+  };
+
+  await writeMailQueue(queue, `Enqueue collector email: ${internalId}`);
+
+  console.log("Collector email queued:", {
+    queueId,
+    internalId,
+    scheduledAt,
+  });
+}
+
+let mailQueueProcessing = false;
+
+async function processMailQueue() {
+  if (mailQueueProcessing) {
+    console.log("Mail queue is already processing. Skip.");
+    return;
+  }
+
+  mailQueueProcessing = true;
+
+  try {
+    const queue = await getMailQueue();
+    const now = Date.now();
+    let changed = false;
+
+    for (const [queueId, job] of Object.entries(queue)) {
+      if (!job || job.type !== "collector_access") continue;
+      if (job.sentAt) continue;
+      if (job.status === "sent") continue;
+
+      const scheduledAt = Date.parse(job.scheduledAt || "");
+      if (Number.isFinite(scheduledAt) && scheduledAt > now) continue;
+
+      const nextRetryAt = Date.parse(job.nextRetryAt || "");
+      if (Number.isFinite(nextRetryAt) && nextRetryAt > now) continue;
+
+      const attempts = Number(job.attempts || 0);
+
+      if (attempts >= 5) {
+        queue[queueId] = {
+          ...job,
+          status: "failed",
+          failedAt: job.failedAt || new Date().toISOString(),
+          lastError: job.lastError || "Max attempts reached",
+        };
+        changed = true;
+        continue;
+      }
+
+      try {
+        const internalId = String(job.internalId || "").trim();
+
+        if (!internalId) {
+          throw new Error("Missing internalId in mail queue job");
+        }
+
+        const file = await readJsonFile(`records/${internalId}/data.json`, null);
+        const record = file?.data;
+
+        if (!record) {
+          throw new Error(`Record data not found: ${internalId}`);
+        }
+
+        if (!String(record.customerEmail || "").trim()) {
+          throw new Error(`Record has no customer email: ${internalId}`);
+        }
+
+        if (!resend || !resendFromEmail) {
+          throw new Error("RESEND not configured");
+        }
+
+        await sendCollectorAccessEmail(record);
+
+        queue[queueId] = {
+          ...job,
+          status: "sent",
+          sentAt: new Date().toISOString(),
+          attempts: attempts + 1,
+          lastAttemptAt: new Date().toISOString(),
+          archiveId: record.archiveId || job.archiveId || "",
+          customerEmail: record.customerEmail || job.customerEmail || "",
+          lastError: "",
+          nextRetryAt: "",
+        };
+
+        changed = true;
+
+        console.log("Collector email queue sent:", {
+          queueId,
+          internalId,
+          archiveId: record.archiveId || "",
+        });
+      } catch (error) {
+        const nextRetryAtValue = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
+        queue[queueId] = {
+          ...job,
+          status: "pending",
+          attempts: attempts + 1,
+          lastAttemptAt: new Date().toISOString(),
+          nextRetryAt: nextRetryAtValue,
+          lastError: error?.message || String(error),
+        };
+
+        changed = true;
+
+        console.error("Collector email queue error:", {
+          queueId,
+          error: error?.message || error,
+          nextRetryAt: nextRetryAtValue,
+        });
+      }
+    }
+
+    if (changed) {
+      await writeMailQueue(queue, "Process mail queue");
+    }
+  } finally {
+    mailQueueProcessing = false;
+  }
+}
+
 async function getNextEdition({ artworkCode, sizeCode }) {
   const file = await readJsonFile("records-source.json", {});
   const source = normalizeMap(file.data);
