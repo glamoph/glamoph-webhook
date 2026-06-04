@@ -1936,6 +1936,17 @@ app.post(
 
         const order = await fetchShopifyOrderForAdmin(orderId);
 
+        const testCheck = detectTestOrder(order);
+
+        if (testCheck.isTest) {
+          console.log("Test order detected from fulfillment webhook. Skip certificate issue.", {
+            orderId,
+            orderName: order?.name || "",
+            reasons: testCheck.reasons,
+          });
+          return;
+        }
+
         const fulfillmentStatus = String(order?.fulfillment_status || "").trim().toLowerCase();
         const trackingInfo = extractTrackingInfoFromOrder(order);
 
