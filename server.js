@@ -1385,16 +1385,18 @@ function buildAdminDraftFromLineItem(order, item) {
 }
 
 function buildAdminDraftsFromOrder(order) {
-  const trackingInfo = extractTrackingInfoFromOrder(order);
+  const lineItems = Array.isArray(order?.line_items) ? order.line_items : [];
 
-  if (!trackingInfo.hasTracking) {
-    console.log("No tracking number found. Skip certificate issue.");
-    return;
+  const drafts = lineItems
+    .filter(isArtworkLineItem)
+    .map((item) => buildAdminDraftFromLineItem(order, item));
+
+  if (!drafts.length) {
+    throw new Error("No artwork line item found in this order");
   }
 
-  console.log("TRACKING INFO:", trackingInfo);
-  
-  const lineItems = Array.isArray(order?.line_items) ? order.line_items : [];
+  return drafts;
+}
 
   const drafts = lineItems
     .filter(isArtworkLineItem)
