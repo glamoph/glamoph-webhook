@@ -1506,13 +1506,22 @@ async function processOrderWebhook(order) {
     ""
   ).trim();
 
-  console.log("EMAIL DEBUG:", {
+    console.log("EMAIL DEBUG:", {
     orderId,
     orderName,
     direct_email: directContact.email || "",
     saved_email: savedContact?.email || "",
     resolved: customerEmail,
   });
+
+  const trackingInfo = extractTrackingInfoFromOrder(order);
+
+  if (!trackingInfo.hasTracking) {
+    console.log("No tracking number found. Skip certificate issue.");
+    return;
+  }
+
+  console.log("TRACKING INFO:", trackingInfo);
   
   const lineItems = Array.isArray(order?.line_items) ? order.line_items : [];
 
