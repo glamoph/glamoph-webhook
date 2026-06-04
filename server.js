@@ -1087,6 +1087,109 @@ function orderHasTrackingNumber(order) {
   return extractTrackingInfoFromOrder(order).hasTracking;
 }
 
+function collectOrderTestSignals(order) {
+  const tags = String(order?.tags || "")
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+
+  const discountCodes = Array.isArray(order?.discount_codes)
+    ? order.discount_codes.map((item) => item?.code || "").filter(Boolean)
+    : [];
+
+  const discountApplications = Array.isArray(order?.discount_applications)
+    ? order.discount_applications
+        .map((item) => item?.code || item?.title || item?.description || "")
+        .filter(Boolean)
+    : [];
+
+  const paymentGateways = Array.isArray(order?.payment_gateway_names)
+    ? order.payment_gateway_names.filter(Boolean)
+    : [];
+
+  const lineItems = Array.isArray(order?.line_items) ? order.line_items : [];
+
+  const lineItemTexts = lineItems.flatMap((item) => [
+    item?.sku || "",
+    item?.title || "",
+    item?.variant_title || "",
+    item?.vendor || "",
+  ]);
+
+  return {
+    tags,
+    discountCodes,
+    discountApplications,
+    paymentGateways,
+    lineItemTexts,
+    orderTexts: [
+      order?.name || "",
+      order?.note || "",
+      order?.source_name || "",
+    ],
+  };
+}
+
+function textLooksLikeTest(value) {
+  const text = String(value || "").trim().toUpperCase();
+
+  if (!text) return false;
+
+  return (
+    /(^|[^A-Z0-9])TEST([^A-Z0-9]|$)/.test(text) ||
+    /^TEST[-_]/.test(text) ||
+    /[-_]TEST([-_]|$)/.test(text) ||
+    text.includes("GLAMOPH_TEST") ||
+    text.includes("BOGUS")
+  );
+}
+
+function detectTestOrder(order) {
+  const signals = collectOrderTestSignals(order);
+  const reasons = [];
+
+  for (const tag of signals.tags) {
+    if (textLooksLikeTest(tag)) {
+      reasons.push(`tag:${tag}`);
+    }
+  }
+
+  for (const code of signals.discountCodes) {
+    if (textLooksLikeTest(code)) {
+      reasons.push(`discount_code:${code}`);
+    }
+  }
+
+  for (const application of signals.discountApplications) {
+    if (textLooksLikeTest(application)) {
+      reasons.push(`discount_application:${application}`);
+    }
+  }
+
+  for (const gateway of signals.paymentGateways) {
+    if (textLooksLikeTest(gateway)) {
+      reasons.push(`payment_gateway:${gateway}`);
+    }
+  }
+
+  for (const text of signals.lineItemTexts) {
+    if (textLooksLikeTest(text)) {
+      reasons.push(`line_item:${text}`);
+    }
+  }
+
+  for (const text of signals.orderTexts) {
+    if (textLooksLikeTest(text)) {
+      reasons.push(`order:${text}`);
+    }
+  }
+
+  return {
+    isTest: reasons.length > 0,
+    reasons,
+  };
+}
+
 async function findIssuedByOrderId(orderId) {
   const file = await readJsonFile("issued-index.json", {});
   const issuedIndex = normalizeMap(file.data);
