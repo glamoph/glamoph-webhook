@@ -9,6 +9,7 @@ const { execSync } = require("child_process");
 
 const { verifyShopifyWebhook } = require("./lib/webhook-verify");
 const { readJsonFile, writeJsonFile, putFileBase64 } = require("./lib/github-contents");
+const { readPrivateJsonFile, writePrivateJsonFile } = require("./lib/private-github-contents");
 const { syncProductFeaturedImageToGitHub } = require("./lib/image-sync");
 
 const app = express();
@@ -195,6 +196,18 @@ function buildPublicId({ artworkCode, sizeCode, editionNumber }) {
 function buildInternalId(publicId) {
   return `${publicId}-${randomSuffix(8)}`;
 }
+function buildCollectorUrl(internalId, ownerToken) {
+  const id = encodeURIComponent(String(internalId || "").trim());
+  const token = encodeURIComponent(String(ownerToken || "").trim());
+  return `${VERIFY_PUBLIC_BASE_URL}/collector/${id}?t=${token}`;
+}
+
+function buildCollectorPdfUrl(internalId, ownerToken) {
+  const id = encodeURIComponent(String(internalId || "").trim());
+  const token = encodeURIComponent(String(ownerToken || "").trim());
+  return `${VERIFY_PUBLIC_BASE_URL}/collector/${id}/certificate.pdf?t=${token}`;
+}
+
 
 function resolveRecordImageUrl(value) {
   const raw = String(value || "").trim();
@@ -328,46 +341,19 @@ function buildPageHtml(record, recordId, options = {}) {
 }
 
 function buildStaticPageHtml(record) {
-  const pdfUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${record.internalId}/certificate.pdf`;
-  const ownerToken = escapeHtml(record.ownerToken || "");
-
-  return buildPageHtml(record, record.archiveId, { isOwner: true })
+  // Public Archive pages must never contain owner tokens, customer data,
+  // or collector-only signature access. Collector access is served dynamically
+  // through /collector/:internalId?t=... after token validation.
+  return buildPageHtml(record, record.archiveId, { isOwner: false })
     .replace('href="/archive.css"', `href="${ARCHIVE_ASSET_BASE_URL}/public/archive.css"`)
-    .replace('src="/assets/signature.png"', `src="${ARCHIVE_ASSET_BASE_URL}/public/assets/signature.png"`)
-    .replace(
-      '<button class="archive-download" type="button" onclick="window.print()">Download PDF</button>',
-      `<a class="archive-download" href="${pdfUrl}" target="_blank" rel="noopener noreferrer">Download PDF</a>`
-    )
-    .replace(
-      "</head>",
-      `<style>
-        .archive-signature-wrap {
-          display: none;
-        }
-
-        html.is-owner .archive-signature-wrap {
-          display: block;
-        }
-      </style>
-      <script>
-        (function () {
-          var params = new URLSearchParams(window.location.search);
-          var token = params.get("t") || "";
-          var ownerToken = "${ownerToken}";
-
-          if (token && ownerToken && token === ownerToken) {
-            document.documentElement.classList.add("is-owner");
-          }
-        })();
-      </script>
-      </head>`
-    );
+    .replace('src="/assets/signature.png"', `src="${ARCHIVE_ASSET_BASE_URL}/public/assets/signature.png"`);
 }
 
-function buildPdfHtml(record) {
-  const pdfUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${record.internalId}/certificate.pdf`;
+function buildPdfHtml(record, options = {}) {
+  const pdfUrl = record.pdfUrl || `${ARCHIVE_ASSET_BASE_URL}/records/${record.internalId}/certificate.pdf`;
+  const isOwner = options.isOwner !== false;
 
-  return buildPageHtml(record, record.archiveId, { isOwner: true })
+  return buildPageHtml(record, record.archiveId, { isOwner })
     .replace('href="/archive.css"', `href="${ARCHIVE_ASSET_BASE_URL}/public/archive.css"`)
     .replace('src="/assets/signature.png"', `src="${ARCHIVE_ASSET_BASE_URL}/public/assets/signature.png"`)
     .replace(
@@ -483,7 +469,7 @@ async function generateAndUploadCertificatePdf(internalId, record, messagePrefix
     throw new Error("Missing internalId");
   }
 
-  const pdfHtml = buildPdfHtml(record);
+  const pdfHtml = buildPdfHtml(sanitizePublicRecord(record), { isOwner: false });
 
   const pdfBase64 = await retryAsync(
     () => generatePdfBase64(pdfHtml),
@@ -857,12 +843,12 @@ async function sendCollectorAccessEmail(record) {
 }
 
 async function getMailQueue() {
-  const file = await readJsonFile("mail-queue.json", {});
+  const file = await readPrivateJsonFile(PRIVATE_PATHS.mailQueue, {});
   return normalizeMap(file.data);
 }
 
-async function writeMailQueue(queue, message = "Update mail queue") {
-  await writeJsonFile("mail-queue.json", queue, message);
+async function writeMailQueue(queue, message = "Update private mail queue") {
+  await writePrivateJsonFile(PRIVATE_PATHS.mailQueue, queue, message);
 }
 
 async function enqueueCollectorAccessEmail(record, delayMs = 10 * 60 * 1000) {
@@ -898,6 +884,7 @@ async function enqueueCollectorAccessEmail(record, delayMs = 10 * 60 * 1000) {
     orderName: String(record?.orderName || ""),
     lineItemId: String(record?.lineItemId || ""),
     customerEmail: String(record?.customerEmail || "").trim(),
+    ownerToken: String(record?.ownerToken || "").trim(),
     scheduledAt,
     createdAt: new Date().toISOString(),
     attempts: 0,
@@ -959,14 +946,27 @@ async function processMailQueue() {
         }
 
         const file = await readJsonFile(`records/${internalId}/data.json`, null);
-        const record = file?.data;
+        const publicRecord = file?.data;
 
-        if (!record) {
+        if (!publicRecord) {
           throw new Error(`Record data not found: ${internalId}`);
         }
 
-        if (!String(record.customerEmail || "").trim()) {
-          throw new Error(`Record has no customer email: ${internalId}`);
+        const record = {
+          ...publicRecord,
+          customerEmail: String(job.customerEmail || "").trim(),
+          ownerToken: String(job.ownerToken || "").trim(),
+        };
+
+        record.ownerArchiveUrl = buildCollectorUrl(internalId, record.ownerToken);
+        record.pdfUrl = buildCollectorPdfUrl(internalId, record.ownerToken);
+
+        if (!record.customerEmail) {
+          throw new Error(`Mail queue job has no customer email: ${internalId}`);
+        }
+
+        if (!record.ownerToken) {
+          throw new Error(`Mail queue job has no owner token: ${internalId}`);
         }
 
         if (!resend || !resendFromEmail) {
@@ -975,17 +975,24 @@ async function processMailQueue() {
 
         await sendCollectorAccessEmail(record);
 
+        const sentAt = new Date().toISOString();
         queue[queueId] = {
           ...job,
           status: "sent",
-          sentAt: new Date().toISOString(),
+          sentAt,
           attempts: attempts + 1,
-          lastAttemptAt: new Date().toISOString(),
-          archiveId: record.archiveId || job.archiveId || "",
-          customerEmail: record.customerEmail || job.customerEmail || "",
+          lastAttemptAt: sentAt,
+          archiveId: publicRecord.archiveId || job.archiveId || "",
           lastError: "",
           nextRetryAt: "",
         };
+
+        if (job.lineItemId) {
+          await updateReservation(job.lineItemId, {
+            status: "certificate_sent",
+            certificateSentAt: sentAt,
+          }, "Mark certificate email sent");
+        }
 
         changed = true;
 
@@ -1050,8 +1057,15 @@ async function getNextEdition({ artworkCode, sizeCode }) {
   };
 }
 
+const PRIVATE_PATHS = {
+  issuedIndex: "private/issued-index.json",
+  orderContactIndex: "private/order-contact-index.json",
+  reservationsIndex: "private/edition-reservations.json",
+  mailQueue: "private/mail-queue.json",
+};
+
 async function getIssuedIndex() {
-  const file = await readJsonFile("issued-index.json", {});
+  const file = await readPrivateJsonFile(PRIVATE_PATHS.issuedIndex, {});
   return normalizeMap(file.data);
 }
 
@@ -1059,16 +1073,63 @@ async function updateIssuedIndex(lineItemId, payload) {
   const current = await getIssuedIndex();
   current[String(lineItemId)] = payload;
 
-  await writeJsonFile(
-    "issued-index.json",
+  await writePrivateJsonFile(
+    PRIVATE_PATHS.issuedIndex,
     current,
-    `Update issued index: ${lineItemId}`
+    `Update private issued index: ${lineItemId}`
   );
 }
 
 async function getOrderContactIndex() {
-  const file = await readJsonFile("order-contact-index.json", {});
+  const file = await readPrivateJsonFile(PRIVATE_PATHS.orderContactIndex, {});
   return normalizeMap(file.data);
+}
+
+async function writeOrderContactIndex(index, message = "Update private order contacts") {
+  await writePrivateJsonFile(PRIVATE_PATHS.orderContactIndex, index, message);
+}
+
+async function getReservationsIndex() {
+  const file = await readPrivateJsonFile(PRIVATE_PATHS.reservationsIndex, {});
+  return normalizeMap(file.data);
+}
+
+async function writeReservationsIndex(index, message = "Update edition reservations") {
+  await writePrivateJsonFile(PRIVATE_PATHS.reservationsIndex, index, message);
+}
+
+async function updateReservation(lineItemId, patch, message = "Update edition reservation") {
+  const reservations = await getReservationsIndex();
+  const key = String(lineItemId || "");
+  if (!key) throw new Error("Missing lineItemId for reservation update");
+
+  reservations[key] = {
+    ...(reservations[key] || {}),
+    ...patch,
+    lineItemId: key,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await writeReservationsIndex(reservations, `${message}: ${key}`);
+  return reservations[key];
+}
+
+let editionReservationLock = Promise.resolve();
+
+async function withEditionReservationLock(fn) {
+  const previous = editionReservationLock;
+  let release;
+  editionReservationLock = new Promise((resolve) => {
+    release = resolve;
+  });
+
+  await previous;
+
+  try {
+    return await fn();
+  } finally {
+    release();
+  }
 }
 
 function extractOrderContact(order) {
@@ -1136,10 +1197,9 @@ async function saveOrderContact(order) {
     savedAt: new Date().toISOString(),
   };
 
-  await writeJsonFile(
-    "order-contact-index.json",
+  await writeOrderContactIndex(
     current,
-    `Save order contact: ${orderName || orderId}`
+    `Save private order contact: ${orderName || orderId}`
   );
 
   console.log("Order contact saved:", {
@@ -1167,30 +1227,49 @@ async function updateRecordsLog(publicId, internalId) {
   );
 }
 
+function sanitizePublicRecord(record) {
+  const privateKeys = new Set([
+    "ownerToken",
+    "ownerArchiveUrl",
+    "customerEmail",
+    "customerFirstName",
+    "customerLastName",
+  ]);
+
+  const out = {};
+  for (const [key, value] of Object.entries(record || {})) {
+    if (privateKeys.has(key)) continue;
+    out[key] = value;
+  }
+
+  out.recordVisibility = out.recordVisibility || "public";
+  out.status = out.status || "fulfilled";
+  return out;
+}
+
 async function createRecordFile(internalId, record) {
-  record.permanentArchiveUrl =
-    `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/`;
-  record.pdfUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/certificate.pdf`;
+  const publicRecord = sanitizePublicRecord({
+    ...record,
+    permanentArchiveUrl: `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/`,
+    archiveUrl: `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/`,
+    // PDF is no longer uploaded to the public archive by default.
+    // Collector PDFs are served dynamically from /collector/:internalId/certificate.pdf?t=...
+    pdfUrl: "",
+  });
 
   await writeJsonFile(
     `records/${internalId}/data.json`,
-    record,
-    `Create record data: ${internalId}`
+    publicRecord,
+    `Create public record data: ${internalId}`
   );
 
-  const staticHtml = buildStaticPageHtml(record);
+  const staticHtml = buildStaticPageHtml(publicRecord);
 
   await putFileBase64({
     path: `records/${internalId}/index.html`,
     base64Content: Buffer.from(staticHtml, "utf8").toString("base64"),
-    message: `Create record page: ${internalId}`,
+    message: `Create public record page: ${internalId}`,
   });
-
-  try {
-    await generateAndUploadCertificatePdf(internalId, record, "Create");
-  } catch (error) {
-    console.error("PDF generation failed:", internalId, error?.message || error);
-  }
 }
 
 function normalizeOrderId(value) {
@@ -1360,8 +1439,7 @@ function detectTestOrder(order) {
 }
 
 async function findIssuedByOrderId(orderId) {
-  const file = await readJsonFile("issued-index.json", {});
-  const issuedIndex = normalizeMap(file.data);
+  const issuedIndex = await getIssuedIndex();
 
   return Object.values(issuedIndex).filter((item) => {
     return normalizeOrderId(item?.orderId) === normalizeOrderId(orderId);
@@ -1369,26 +1447,218 @@ async function findIssuedByOrderId(orderId) {
 }
 
 
+function resolveArtworkIdentityFromLineItem(item) {
+  const sku = String(item?.sku || "").trim().toUpperCase();
+  const title = String(item?.title || "").trim();
+  const variantTitle = String(item?.variant_title || "").trim().toUpperCase();
+  const productId = item?.product_id;
+
+  if (!sku) {
+    return { valid: false, reason: "Line item has no SKU", sku, title, variantTitle, productId };
+  }
+
+  const parsed = parseSku(sku);
+  if (!parsed.valid) {
+    return { valid: false, reason: `Invalid SKU format: ${sku}`, sku, title, variantTitle, productId };
+  }
+
+  let sizeCode = parsed.sizeCode;
+  if (!sizeCode) {
+    if (/\bS\b/.test(variantTitle)) sizeCode = "S";
+    else if (/\bM\b/.test(variantTitle)) sizeCode = "M";
+    else if (/\bL\b/.test(variantTitle)) sizeCode = "L";
+  }
+
+  if (!parsed.artworkCode || !sizeCode) {
+    return { valid: false, reason: "Could not resolve artworkCode / size", sku, title, variantTitle, productId };
+  }
+
+  return {
+    valid: true,
+    sku,
+    title,
+    variantTitle,
+    productId,
+    artworkCode: parsed.artworkCode,
+    sizeCode,
+    frameCode: parsed.frameCode,
+  };
+}
+
+function buildDStudioFileNames({ orderName, publicId, sizeCode, artworkCode }) {
+  const cleanOrder = String(orderName || "ORDER").replace(/[^A-Z0-9]+/gi, "").toUpperCase() || "ORDER";
+  const sizeLabel = sizeCode ? `${sizeCode}` : "SIZE";
+
+  return {
+    folderName: `${cleanOrder}_${publicId}`,
+    printFileName: `GLAMOPH_${publicId}_${artworkCode}_${sizeLabel}_PRINT.tif`,
+    certificateFileName: `GLAMOPH_${publicId}_COA_A5.pdf`,
+    notesFileName: `GLAMOPH_${publicId}_ORDER_NOTES.txt`,
+  };
+}
+
+async function ensureReservationForLineItem(order, item) {
+  return withEditionReservationLock(async () => {
+    const lineItemId = String(item?.id || "").trim();
+    if (!lineItemId) throw new Error("Missing lineItemId");
+
+    const existingReservations = await getReservationsIndex();
+    if (existingReservations[lineItemId]) {
+      return existingReservations[lineItemId];
+    }
+
+    const issuedIndex = await getIssuedIndex();
+    if (issuedIndex[lineItemId]) {
+      return {
+        ...issuedIndex[lineItemId],
+        status: "issued",
+        lineItemId,
+      };
+    }
+
+    if (!isArtworkLineItem(item)) {
+      throw new Error("Selected line item is not an artwork item");
+    }
+
+    const identity = resolveArtworkIdentityFromLineItem(item);
+    if (!identity.valid) {
+      throw new Error(identity.reason || "Invalid artwork line item");
+    }
+
+    const orderId = normalizeOrderId(order?.id);
+    const orderName = String(order?.name || "").trim();
+    const directContact = extractOrderContact(order);
+    const savedContact = await getSavedOrderContact(orderId);
+
+    const customerEmail = String(directContact.email || savedContact?.email || "").trim();
+    const customerFirstName = String(directContact.firstName || savedContact?.firstName || "").trim();
+    const customerLastName = String(directContact.lastName || savedContact?.lastName || "").trim();
+
+    const { editionNumber, editionTotal } = await getNextEdition({
+      artworkCode: identity.artworkCode,
+      sizeCode: identity.sizeCode,
+    });
+
+    const publicId = buildPublicId({
+      artworkCode: identity.artworkCode,
+      sizeCode: identity.sizeCode,
+      editionNumber,
+    });
+
+    const internalId = buildInternalId(publicId);
+    const ownerToken = crypto.randomBytes(12).toString("hex");
+    const fileNames = buildDStudioFileNames({
+      orderName,
+      publicId,
+      sizeCode: identity.sizeCode,
+      artworkCode: identity.artworkCode,
+    });
+
+    const now = new Date().toISOString();
+    const reservation = {
+      status: "reserved",
+      publicId,
+      internalId,
+      ownerToken,
+      artworkCode: identity.artworkCode,
+      sizeCode: identity.sizeCode,
+      frameCode: identity.frameCode,
+      editionNumber,
+      editionTotal,
+      edition: `${pad2(editionNumber)} / ${editionTotal}`,
+      orderId,
+      orderName,
+      lineItemId,
+      sku: identity.sku,
+      title: identity.title,
+      productId: identity.productId ? String(identity.productId) : "",
+      customerEmail,
+      customerFirstName,
+      customerLastName,
+      locale: String(order?.customer_locale || order?.locale || "").trim().toLowerCase(),
+      shippingCountryCode: String(order?.shipping_address?.country_code || "").trim().toUpperCase(),
+      billingCountryCode: String(order?.billing_address?.country_code || "").trim().toUpperCase(),
+      reservedAt: now,
+      updatedAt: now,
+      dStudio: {
+        imageSource: "Google Drive / Dropbox",
+        folderName: fileNames.folderName,
+        printFileName: fileNames.printFileName,
+        certificateFileName: fileNames.certificateFileName,
+        notesFileName: fileNames.notesFileName,
+      },
+    };
+
+    existingReservations[lineItemId] = reservation;
+    await writeReservationsIndex(existingReservations, `Reserve edition ${publicId} for ${orderName || orderId}`);
+
+    console.log("Edition reserved:", {
+      publicId,
+      internalId,
+      orderId,
+      orderName,
+      lineItemId,
+    });
+
+    return reservation;
+  });
+}
+
+async function reserveEditionsForOrder(order) {
+  const orderId = normalizeOrderId(order?.id);
+  const orderName = String(order?.name || "").trim();
+  const lineItems = Array.isArray(order?.line_items) ? order.line_items : [];
+
+  if (!orderId || !lineItems.length) {
+    return { ok: true, reserved: [], skipped: true, reason: "Missing order id or line items" };
+  }
+
+  const testCheck = detectTestOrder(order);
+  if (testCheck.isTest) {
+    console.log("Test order detected. Skip edition reservation.", {
+      orderId,
+      orderName,
+      reasons: testCheck.reasons,
+    });
+    return { ok: true, reserved: [], skipped: true, reason: "Test order", reasons: testCheck.reasons };
+  }
+
+  const results = [];
+
+  for (const item of lineItems) {
+    if (!item?.id) continue;
+    if (!isArtworkLineItem(item)) continue;
+
+    try {
+      const reservation = await ensureReservationForLineItem(order, item);
+      results.push(reservation);
+    } catch (error) {
+      console.error("Edition reservation error:", {
+        orderId,
+        orderName,
+        lineItemId: item?.id || "",
+        error: error?.message || error,
+      });
+    }
+  }
+
+  return { ok: true, reserved: results };
+}
+
 async function issueCertificateForLineItem(order, item) {
-  const orderId = order?.id;
+  const orderId = normalizeOrderId(order?.id);
   const orderName = order?.name || "";
   const createdAt = order?.created_at || new Date().toISOString();
 
-  if (!orderId) {
-    throw new Error("Missing orderId");
-  }
+  if (!orderId) throw new Error("Missing orderId");
 
-  const lineItemId = item?.id;
-
-  if (!lineItemId) {
-    throw new Error("Missing lineItemId");
-  }
+  const lineItemId = String(item?.id || "").trim();
+  if (!lineItemId) throw new Error("Missing lineItemId");
 
   const issuedIndex = await getIssuedIndex();
 
-  if (issuedIndex[String(lineItemId)]) {
-    const existing = issuedIndex[String(lineItemId)];
-
+  if (issuedIndex[lineItemId]) {
+    const existing = issuedIndex[lineItemId];
     return {
       ok: true,
       skipped: true,
@@ -1397,152 +1667,118 @@ async function issueCertificateForLineItem(order, item) {
     };
   }
 
-  if (!isArtworkLineItem(item)) {
-    throw new Error("Selected line item is not an artwork item");
+  const reservation = await ensureReservationForLineItem(order, item);
+
+  if (reservation.status === "cancelled") {
+    return {
+      ok: true,
+      skipped: true,
+      reason: "Reservation cancelled",
+      record: reservation,
+    };
   }
 
-  const sku = String(item?.sku || "").trim().toUpperCase();
-  const productId = item?.product_id;
-  const title = String(item?.title || "").trim();
-  const variantTitle = String(item?.variant_title || "").trim().toUpperCase();
-
-  if (!sku) {
-    throw new Error("Selected line item has no SKU");
-  }
-
-  const parsed = parseSku(sku);
-
-  if (!parsed.valid) {
-    throw new Error(`Invalid SKU format: ${sku}`);
-  }
-
-  const artworkCode = parsed.artworkCode;
-  let sizeCode = parsed.sizeCode;
-  const frameCode = parsed.frameCode;
-
-  if (!sizeCode) {
-    if (/\bS\b/.test(variantTitle)) sizeCode = "S";
-    else if (/\bM\b/.test(variantTitle)) sizeCode = "M";
-    else if (/\bL\b/.test(variantTitle)) sizeCode = "L";
-  }
-
-  if (!artworkCode || !sizeCode) {
-    throw new Error("Could not resolve artworkCode / size from selected item");
-  }
-
-  if (!productId) {
-    throw new Error("Selected line item has no product_id");
-  }
-
+  const productId = item?.product_id || reservation.productId;
   const trackingInfo = extractTrackingInfoFromOrder(order);
 
-  const directContact = extractOrderContact(order);
-  const savedContact = await getSavedOrderContact(orderId);
-
-  const customerEmail = String(
-    directContact.email ||
-    savedContact?.email ||
-    ""
-  ).trim();
-
-  const customerFirstName = String(
-    directContact.firstName ||
-    savedContact?.firstName ||
-    ""
-  ).trim();
-
-  const customerLastName = String(
-    directContact.lastName ||
-    savedContact?.lastName ||
-    ""
-  ).trim();
-
-  const { editionNumber, editionTotal } = await getNextEdition({
-    artworkCode,
-    sizeCode,
-  });
-
-  const publicId = buildPublicId({
-    artworkCode,
-    sizeCode,
-    editionNumber,
-  });
-
-  const internalId = buildInternalId(publicId);
-
   let imageResult = {
-    filePath: `images/${artworkCode}.jpg`,
+    filePath: `images/${reservation.artworkCode}.jpg`,
   };
 
-  try {
-    const syncedImage = await syncProductFeaturedImageToGitHub(productId, artworkCode);
-    if (syncedImage?.filePath) imageResult = syncedImage;
-  } catch (error) {
-    console.error("Image sync failed:", error);
+  if (productId) {
+    try {
+      const syncedImage = await syncProductFeaturedImageToGitHub(productId, reservation.artworkCode);
+      if (syncedImage?.filePath) imageResult = syncedImage;
+    } catch (error) {
+      console.error("Image sync failed:", error);
+    }
   }
 
-  const ownerToken = crypto.randomBytes(6).toString("hex");
-  const publicArchiveUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/`;
-  const ownerArchiveUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/?t=${ownerToken}`;
+  const fulfilledAt = new Date().toISOString();
+  const issuedAt = fulfilledAt;
+  const publicArchiveUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${reservation.internalId}/`;
+  const ownerArchiveUrl = buildCollectorUrl(reservation.internalId, reservation.ownerToken);
 
   const record = {
     verified: "Archive Record",
-    title,
-    archiveId: publicId,
-    internalId,
-    edition: `${pad2(editionNumber)} / ${editionTotal}`,
-    editionNumber,
-    editionTotal,
+    title: reservation.title || String(item?.title || "").trim(),
+    archiveId: reservation.publicId,
+    internalId: reservation.internalId,
+    edition: `${pad2(reservation.editionNumber)} / ${reservation.editionTotal}`,
+    editionNumber: reservation.editionNumber,
+    editionTotal: reservation.editionTotal,
     artist: "GLAMOPH",
     medium: "Giclée print on museum-quality fine art paper",
-    size: resolveSizeLabel(sizeCode),
-    frame: frameCode === "BLK" ? "Black" : "White",
-    archiveDate: formatArchiveDate(createdAt),
+    size: resolveSizeLabel(reservation.sizeCode),
+    frame: reservation.frameCode === "WHT" ? "White" : "Black",
+    archiveDate: formatArchiveDate(issuedAt),
     archiveUrl: publicArchiveUrl,
-    ownerArchiveUrl,
     image: `/${imageResult.filePath}`,
-    artworkCode,
-    sizeCode,
+    artworkCode: reservation.artworkCode,
+    sizeCode: reservation.sizeCode,
+    status: "fulfilled",
+    recordVisibility: "public",
     shopifyOrderId: orderId,
     orderName,
     lineItemId,
-    sku,
+    sku: reservation.sku,
     trackingNumber: trackingInfo.trackingNumber,
     trackingUrl: trackingInfo.trackingUrl,
     trackingCompany: trackingInfo.trackingCompany,
+    reservedAt: reservation.reservedAt || "",
+    fulfilledAt,
+    issuedAt,
     createdAt,
-    updatedAt: new Date().toISOString(),
-    ownerToken,
-    customerEmail,
-    customerFirstName,
-    customerLastName,
-    locale: String(order?.customer_locale || order?.locale || "").trim().toLowerCase(),
-    shippingCountryCode: String(order?.shipping_address?.country_code || "").trim().toUpperCase(),
-    billingCountryCode: String(order?.billing_address?.country_code || "").trim().toUpperCase(),
+    updatedAt: issuedAt,
+    locale: reservation.locale || String(order?.customer_locale || order?.locale || "").trim().toLowerCase(),
+    shippingCountryCode: reservation.shippingCountryCode || String(order?.shipping_address?.country_code || "").trim().toUpperCase(),
+    billingCountryCode: reservation.billingCountryCode || String(order?.billing_address?.country_code || "").trim().toUpperCase(),
   };
 
-  await createRecordFile(internalId, record);
-  await updateRecordsLog(publicId, internalId);
+  const privateRecord = {
+    ...record,
+    ownerToken: reservation.ownerToken,
+    ownerArchiveUrl,
+    pdfUrl: buildCollectorPdfUrl(reservation.internalId, reservation.ownerToken),
+    customerEmail: reservation.customerEmail || "",
+    customerFirstName: reservation.customerFirstName || "",
+    customerLastName: reservation.customerLastName || "",
+  };
+
+  await createRecordFile(reservation.internalId, record);
+  await updateRecordsLog(reservation.publicId, reservation.internalId);
 
   await updateIssuedIndex(lineItemId, {
-    publicId,
-    internalId,
+    publicId: reservation.publicId,
+    internalId: reservation.internalId,
     orderId,
     orderName,
-    sku,
-    createdAt,
+    sku: reservation.sku,
+    lineItemId,
+    issuedAt,
   });
+
+  await updateReservation(lineItemId, {
+    ...reservation,
+    status: "fulfilled",
+    fulfilledAt,
+    issuedAt,
+    trackingNumber: trackingInfo.trackingNumber,
+    trackingUrl: trackingInfo.trackingUrl,
+    trackingCompany: trackingInfo.trackingCompany,
+  }, "Mark reservation fulfilled");
 
   return {
     ok: true,
     skipped: false,
-    record,
+    record: privateRecord,
   };
 }
 
 
 async function resendCollectorAccessByOrderId(orderId) {
   const existing = await findIssuedByOrderId(orderId);
+  const reservations = await getReservationsIndex();
 
   if (!existing.length) {
     return {
@@ -1555,16 +1791,41 @@ async function resendCollectorAccessByOrderId(orderId) {
 
   for (const item of existing) {
     const internalId = String(item?.internalId || "").trim();
+    const lineItemId = String(item?.lineItemId || "").trim();
     if (!internalId) continue;
 
     const file = await readJsonFile(`records/${internalId}/data.json`, null);
-    const record = file?.data;
+    const publicRecord = file?.data;
 
-    if (!record) {
+    if (!publicRecord) {
       results.push({
         ok: false,
         internalId,
         error: "Record data not found",
+      });
+      continue;
+    }
+
+    const reservation = lineItemId ? reservations[lineItemId] : null;
+    const ownerToken = String(reservation?.ownerToken || item?.ownerToken || "").trim();
+    const customerEmail = String(reservation?.customerEmail || item?.customerEmail || "").trim();
+
+    const record = {
+      ...publicRecord,
+      ownerToken,
+      ownerArchiveUrl: buildCollectorUrl(internalId, ownerToken),
+      pdfUrl: buildCollectorPdfUrl(internalId, ownerToken),
+      customerEmail,
+      customerFirstName: String(reservation?.customerFirstName || ""),
+      customerLastName: String(reservation?.customerLastName || ""),
+    };
+
+    if (!record.customerEmail || !record.ownerToken) {
+      results.push({
+        ok: false,
+        internalId,
+        archiveId: publicRecord.archiveId || "",
+        error: "Missing private customer email or owner token",
       });
       continue;
     }
@@ -1574,10 +1835,10 @@ async function resendCollectorAccessByOrderId(orderId) {
     results.push({
       ok: true,
       internalId,
-      archiveId: record.archiveId || "",
-      title: record.title || "",
-      email: record.customerEmail || "",
-      ownerArchiveUrl: record.ownerArchiveUrl || "",
+      archiveId: publicRecord.archiveId || "",
+      title: publicRecord.title || "",
+      email: record.customerEmail,
+      ownerArchiveUrl: record.ownerArchiveUrl,
     });
   }
 
@@ -1588,6 +1849,7 @@ async function resendCollectorAccessByOrderId(orderId) {
     results,
   };
 }
+
 
 function isArtworkLineItem(item) {
   const sku = String(item?.sku || "").trim().toUpperCase();
@@ -1741,10 +2003,123 @@ app.get("/admin/order-detail", async (req, res) => {
   }
 });
 
-async function processOrderWebhook(order) {
-  const orderId = order?.id;
+
+app.get("/admin/reservations", async (req, res) => {
+  try {
+    const adminToken = String(req.get("x-admin-token") || req.query.token || "").trim();
+    const expectedToken = String(process.env.ADMIN_REISSUE_TOKEN || "").trim();
+
+    if (!expectedToken || adminToken !== expectedToken) {
+      return res.status(401).json({ ok: false, error: "Unauthorized" });
+    }
+
+    const reservations = await getReservationsIndex();
+    const issuedIndex = await getIssuedIndex();
+    const orderId = normalizeOrderId(req.query.orderId || "");
+
+    let items = Object.values(reservations).map((item) => ({
+      ...item,
+      ownerToken: item.ownerToken ? "[private]" : "",
+      customerEmail: item.customerEmail ? "[private]" : "",
+      customerFirstName: item.customerFirstName ? "[private]" : "",
+      customerLastName: item.customerLastName ? "[private]" : "",
+    }));
+
+    if (orderId) {
+      items = items.filter((item) => normalizeOrderId(item.orderId) === orderId);
+    }
+
+    items.sort((a, b) => String(b.reservedAt || b.updatedAt || "").localeCompare(String(a.reservedAt || a.updatedAt || "")));
+
+    return res.status(200).json({
+      ok: true,
+      count: items.length,
+      reservations: items,
+      issuedCount: Object.keys(issuedIndex).length,
+    });
+  } catch (error) {
+    console.error("ADMIN RESERVATIONS ERROR:", error);
+    return res.status(500).json({ ok: false, error: error?.message || "Internal Server Error" });
+  }
+});
+
+app.post("/admin/reserve-order", express.json({ limit: "1mb" }), async (req, res) => {
+  try {
+    const adminToken = String(req.get("x-admin-token") || req.query.token || "").trim();
+    const expectedToken = String(process.env.ADMIN_REISSUE_TOKEN || "").trim();
+
+    if (!expectedToken || adminToken !== expectedToken) {
+      return res.status(401).json({ ok: false, error: "Unauthorized" });
+    }
+
+    const orderId = normalizeOrderId(req.body?.orderId);
+    if (!orderId) {
+      return res.status(400).json({ ok: false, error: "Missing orderId" });
+    }
+
+    const order = await fetchShopifyOrderForAdmin(orderId);
+    await saveOrderContact(order);
+    const result = await reserveEditionsForOrder(order);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("ADMIN RESERVE ORDER ERROR:", error);
+    return res.status(500).json({ ok: false, error: error?.message || "Internal Server Error" });
+  }
+});
+
+app.post("/admin/update-reservation-status", express.json({ limit: "1mb" }), async (req, res) => {
+  try {
+    const adminToken = String(req.get("x-admin-token") || req.query.token || "").trim();
+    const expectedToken = String(process.env.ADMIN_REISSUE_TOKEN || "").trim();
+
+    if (!expectedToken || adminToken !== expectedToken) {
+      return res.status(401).json({ ok: false, error: "Unauthorized" });
+    }
+
+    const lineItemId = String(req.body?.lineItemId || "").trim();
+    const status = String(req.body?.status || "").trim();
+
+    const allowed = new Set(["reserved", "print_file_ready", "sent_to_dstudio", "cancelled"]);
+    if (!lineItemId || !allowed.has(status)) {
+      return res.status(400).json({ ok: false, error: "Missing lineItemId or invalid status" });
+    }
+
+    const field = status === "print_file_ready" ? "printFileReadyAt" :
+      status === "sent_to_dstudio" ? "sentToDStudioAt" :
+      status === "cancelled" ? "cancelledAt" : "statusUpdatedAt";
+
+    const reservation = await updateReservation(lineItemId, {
+      status,
+      [field]: new Date().toISOString(),
+      note: String(req.body?.note || "").trim(),
+    }, `Admin update reservation status ${status}`);
+
+    return res.status(200).json({ ok: true, reservation });
+  } catch (error) {
+    console.error("ADMIN UPDATE RESERVATION STATUS ERROR:", error);
+    return res.status(500).json({ ok: false, error: error?.message || "Internal Server Error" });
+  }
+});
+
+function extractFulfilledLineItemIdsFromFulfillmentPayload(payload) {
+  const ids = new Set();
+  const lineItems = Array.isArray(payload?.line_items) ? payload.line_items : [];
+
+  for (const item of lineItems) {
+    const id = String(item?.id || item?.line_item_id || "").trim();
+    if (id) ids.add(id);
+  }
+
+  return ids;
+}
+
+async function processOrderWebhook(order, options = {}) {
+  const orderId = normalizeOrderId(order?.id);
   const orderName = order?.name || "";
-  const createdAt = order?.created_at || new Date().toISOString();
+  const allowedLineItemIds = options.allowedLineItemIds instanceof Set
+    ? options.allowedLineItemIds
+    : null;
 
   const testCheck = detectTestOrder(order);
 
@@ -1757,35 +2132,6 @@ async function processOrderWebhook(order) {
     return;
   }
 
-  const directContact = extractOrderContact(order);
-  const savedContact = await getSavedOrderContact(orderId);
-
-  const customerEmail = String(
-    directContact.email ||
-    savedContact?.email ||
-    ""
-  ).trim();
-
-  const customerFirstName = String(
-    directContact.firstName ||
-    savedContact?.firstName ||
-    ""
-  ).trim();
-
-  const customerLastName = String(
-    directContact.lastName ||
-    savedContact?.lastName ||
-    ""
-  ).trim();
-
-    console.log("EMAIL DEBUG:", {
-    orderId,
-    orderName,
-    direct_email: directContact.email || "",
-    saved_email: savedContact?.email || "",
-    resolved: customerEmail,
-  });
-
   const trackingInfo = extractTrackingInfoFromOrder(order);
 
   if (!trackingInfo.hasTracking) {
@@ -1793,179 +2139,63 @@ async function processOrderWebhook(order) {
     return;
   }
 
-  console.log("TRACKING INFO:", trackingInfo);
-  
   const lineItems = Array.isArray(order?.line_items) ? order.line_items : [];
 
   console.log("ORDER ID:", orderId);
   console.log("ORDER NAME:", orderName);
   console.log("LINE ITEMS:", lineItems.length);
+  console.log("TRACKING INFO:", trackingInfo);
 
   if (!orderId || lineItems.length === 0) {
     console.log("No order id or line items. Skip.");
     return;
   }
 
-  const issuedIndex = await getIssuedIndex();
-
   for (const item of lineItems) {
-    const lineItemId = item?.id;
+    const lineItemId = String(item?.id || "").trim();
     if (!lineItemId) continue;
 
-    if (issuedIndex[String(lineItemId)]) {
-      console.log("Already issued. Skip:", lineItemId);
+    if (allowedLineItemIds && allowedLineItemIds.size > 0 && !allowedLineItemIds.has(lineItemId)) {
+      console.log("Skip line item not included in this fulfillment:", lineItemId);
       continue;
     }
 
-    const sku = String(item?.sku || "").trim().toUpperCase();
-    const productId = item?.product_id;
-    const title = String(item?.title || "").trim();
-    const variantTitle = String(item?.variant_title || "").trim().toUpperCase();
-
-    const nonArtworkKeywords = [
-      "LENS-PROTECT",
-      "CASE-LEATHER",
-      "PROTECT",
-      "2YR",
-      "PREM",
-    ];
-
-    const looksLikeNonArtwork =
-      nonArtworkKeywords.some((kw) => sku.includes(kw)) ||
-      nonArtworkKeywords.some((kw) => variantTitle.includes(kw)) ||
-      /protect|case|leather/i.test(title);
-
-    if (looksLikeNonArtwork) {
-      console.log("Skip non-artwork line item:", { title, sku, variantTitle });
-      continue;
-    }
-
-    let artworkCode = "";
-    let sizeCode = "";
-    let frameCode = "";
-
-    if (sku) {
-      const parsed = parseSku(sku);
-
-      if (!parsed.valid) {
-        console.log("Invalid SKU format:", sku);
+    try {
+      if (!isArtworkLineItem(item)) {
+        console.log("Skip non-artwork line item:", {
+          title: item?.title || "",
+          sku: item?.sku || "",
+          variantTitle: item?.variant_title || "",
+        });
         continue;
       }
 
-      artworkCode = parsed.artworkCode;
-      sizeCode = parsed.sizeCode;
-      frameCode = parsed.frameCode;
-    }
+      const result = await issueCertificateForLineItem(order, item);
 
-    if (!artworkCode) {
-      console.log("No artworkCode resolved from SKU/title");
-    }
+      if (result.skipped) {
+        console.log("Certificate skipped:", {
+          lineItemId,
+          reason: result.reason,
+          publicId: result.record?.publicId || result.record?.archiveId || "",
+        });
+        continue;
+      }
 
-    if (!sizeCode) {
-      if (/\bS\b/.test(variantTitle)) sizeCode = "S";
-      else if (/\bM\b/.test(variantTitle)) sizeCode = "M";
-      else if (/\bL\b/.test(variantTitle)) sizeCode = "L";
-    }
+      await enqueueCollectorAccessEmail(result.record, 10 * 60 * 1000);
 
-    if (!artworkCode || !sizeCode) {
-      console.log("Skip line item due to unresolved artwork/size:", {
-        title,
-        sku,
-        variantTitle,
-      });
-      continue;
-    }
-
-    if (!productId) {
-      console.log("Skip line item due to missing product_id:", lineItemId);
-      continue;
-    }
-
-    const { editionNumber, editionTotal } = await getNextEdition({
-      artworkCode,
-      sizeCode,
-    });
-
-    const publicId = buildPublicId({
-      artworkCode,
-      sizeCode,
-      editionNumber,
-    });
-
-    const internalId = buildInternalId(publicId);
-
-    console.log("ISSUE START:", publicId);
-
-    let imageResult = {
-      filePath: `images/${artworkCode}.jpg`,
-    };
-
-    try {
-      const syncedImage = await syncProductFeaturedImageToGitHub(productId, artworkCode);
-      if (syncedImage?.filePath) imageResult = syncedImage;
+      console.log("Issued:", result.record.archiveId, "=>", result.record.internalId);
+      console.log("Collector email queued:", result.record.archiveId, "in 10 minutes");
     } catch (error) {
-      console.error("Image sync failed:", error);
+      console.error("Line item certificate issue error:", {
+        orderId,
+        orderName,
+        lineItemId,
+        error: error?.message || error,
+      });
     }
-
-    const ownerToken = crypto.randomBytes(6).toString("hex");
-    const publicArchiveUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/`;
-    const ownerArchiveUrl = `${ARCHIVE_ASSET_BASE_URL}/records/${internalId}/?t=${ownerToken}`;
-
-    const record = {
-      verified: "Archive Record",
-      title,
-      archiveId: publicId,
-      internalId,
-      edition: `${pad2(editionNumber)} / ${editionTotal}`,
-      editionNumber,
-      editionTotal,
-      artist: "GLAMOPH",
-      medium: "Giclée print on museum-quality fine art paper",
-      size: resolveSizeLabel(sizeCode),
-      frame: frameCode === "BLK" ? "Black" : "White",
-      archiveDate: formatArchiveDate(createdAt),
-      archiveUrl: publicArchiveUrl,
-      ownerArchiveUrl,
-      image: `/${imageResult.filePath}`,
-      artworkCode,
-      sizeCode,
-      shopifyOrderId: orderId,
-      orderName,
-      lineItemId,
-      sku,
-      trackingNumber: trackingInfo.trackingNumber,
-      trackingUrl: trackingInfo.trackingUrl,
-      trackingCompany: trackingInfo.trackingCompany,
-      createdAt,
-      updatedAt: new Date().toISOString(),
-      ownerToken,
-            customerEmail,
-      customerFirstName,
-      customerLastName,
-      locale: String(order?.customer_locale || order?.locale || "").trim().toLowerCase(),
-      shippingCountryCode: String(order?.shipping_address?.country_code || "").trim().toUpperCase(),
-      billingCountryCode: String(order?.billing_address?.country_code || "").trim().toUpperCase(),
-    };
-
-    await createRecordFile(internalId, record);
-    await updateRecordsLog(publicId, internalId);
-
-    await updateIssuedIndex(lineItemId, {
-  publicId,
-  internalId,
-  orderId,
-  orderName,
-  sku,
-  createdAt,
-});
-
-// 証明書メールは、発送通知の約10分後に送信予約する
-await enqueueCollectorAccessEmail(record, 10 * 60 * 1000);
-
-console.log("Issued:", publicId, "=>", internalId);
-console.log("Collector email queued:", publicId, "in 10 minutes");
   }
 }
+
 
 app.post(
   "/webhooks/orders-paid",
@@ -2001,12 +2231,13 @@ app.post(
     res.status(200).send("ok");
 
     setImmediate(async () => {
-  try {
-    await saveOrderContact(payload);
-  } catch (error) {
-    console.error("orders-paid contact save error:", error);
-  }
-});
+      try {
+        await saveOrderContact(payload);
+        await reserveEditionsForOrder(payload);
+      } catch (error) {
+        console.error("orders-paid reservation/contact save error:", error);
+      }
+    });
   }
 );
 
@@ -2044,12 +2275,79 @@ app.post(
     res.status(200).send("ok");
 
     setImmediate(async () => {
-  try {
-    await saveOrderContact(payload);
-  } catch (error) {
-    console.error("orders-create contact save error:", error);
+      try {
+        await saveOrderContact(payload);
+      } catch (error) {
+        console.error("orders-create contact save error:", error);
+      }
+    });
   }
-});
+);
+
+app.post(
+  "/webhooks/orders-cancelled",
+  express.raw({ type: "application/json", limit: "2mb" }),
+  async (req, res) => {
+    console.log("WEBHOOK RECEIVED:", req.path);
+
+    const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body || "");
+    const hmac = req.get("X-Shopify-Hmac-Sha256") || "";
+
+    let verified = false;
+    try {
+      verified = verifyShopifyWebhook(rawBody, hmac);
+    } catch (error) {
+      console.error("Webhook verification setup error:", error);
+      return res.status(500).send("Webhook secret error");
+    }
+
+    if (!verified) {
+      return res.status(401).send("Invalid webhook signature");
+    }
+
+    let payload;
+    try {
+      payload = JSON.parse(rawBody.toString("utf8"));
+    } catch (error) {
+      return res.status(400).send("Invalid JSON");
+    }
+
+    res.status(200).send("ok");
+
+    setImmediate(async () => {
+      try {
+        const orderId = normalizeOrderId(payload?.id);
+        const orderName = String(payload?.name || "").trim();
+        const lineItems = Array.isArray(payload?.line_items) ? payload.line_items : [];
+        const reservations = await getReservationsIndex();
+        let changed = false;
+        const cancelledAt = new Date().toISOString();
+
+        for (const item of lineItems) {
+          const lineItemId = String(item?.id || "").trim();
+          if (!lineItemId || !reservations[lineItemId]) continue;
+          if (reservations[lineItemId].status === "certificate_sent") continue;
+          if (reservations[lineItemId].status === "fulfilled") continue;
+
+          reservations[lineItemId] = {
+            ...reservations[lineItemId],
+            status: "cancelled",
+            cancelledAt,
+            cancelReason: String(payload?.cancel_reason || "").trim(),
+            orderId: reservations[lineItemId].orderId || orderId,
+            orderName: reservations[lineItemId].orderName || orderName,
+            updatedAt: cancelledAt,
+          };
+          changed = true;
+        }
+
+        if (changed) {
+          await writeReservationsIndex(reservations, `Mark reservations cancelled: ${orderName || orderId}`);
+        }
+      } catch (error) {
+        console.error("orders-cancelled processing error:", error);
+      }
+    });
   }
 );
 
@@ -2112,21 +2410,25 @@ app.post(
 
         const fulfillmentStatus = String(order?.fulfillment_status || "").trim().toLowerCase();
         const trackingInfo = extractTrackingInfoFromOrder(order);
+        const fulfilledLineItemIds = extractFulfilledLineItemIdsFromFulfillmentPayload(payload);
 
         console.log("ORDER FULFILLMENT STATUS:", fulfillmentStatus || "(empty)");
         console.log("ORDER TRACKING INFO:", trackingInfo);
-
-        if (fulfillmentStatus !== "fulfilled") {
-          console.log("Order is not fully fulfilled yet. Skip certificate issue.");
-          return;
-        }
+        console.log("FULFILLED LINE ITEM IDS:", Array.from(fulfilledLineItemIds));
 
         if (!trackingInfo.hasTracking) {
-          console.log("Order is fulfilled but tracking number is missing. Skip certificate issue.");
+          console.log("Order has no tracking number yet. Skip certificate issue.");
           return;
         }
 
-        await processOrderWebhook(order);
+        if (fulfilledLineItemIds.size === 0 && fulfillmentStatus !== "fulfilled") {
+          console.log("No line item data in fulfillment payload and order is not fully fulfilled. Skip certificate issue.");
+          return;
+        }
+
+        await processOrderWebhook(order, {
+          allowedLineItemIds: fulfilledLineItemIds,
+        });
       } catch (error) {
         console.error("fulfillments-create processing error:", error);
       }
@@ -2397,6 +2699,83 @@ app.post(
   }
 );
   
+async function getPrivateReservationByInternalId(internalId) {
+  const reservations = await getReservationsIndex();
+  return Object.values(reservations).find((item) => {
+    return String(item?.internalId || "").trim() === String(internalId || "").trim();
+  }) || null;
+}
+
+async function loadCollectorRecord(internalId, token) {
+  const cleanInternalId = String(internalId || "").trim().toUpperCase();
+  const cleanToken = String(token || "").trim();
+
+  if (!cleanInternalId || !cleanToken) {
+    throw new Error("Missing collector token");
+  }
+
+  const reservation = await getPrivateReservationByInternalId(cleanInternalId);
+
+  if (!reservation || String(reservation.ownerToken || "").trim() !== cleanToken) {
+    const err = new Error("Invalid collector token");
+    err.statusCode = 403;
+    throw err;
+  }
+
+  const file = await readJsonFile(`records/${cleanInternalId}/data.json`, null);
+  const publicRecord = file?.data;
+
+  if (!publicRecord) {
+    const err = new Error("Record not found");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  return {
+    ...publicRecord,
+    ownerToken: cleanToken,
+    ownerArchiveUrl: buildCollectorUrl(cleanInternalId, cleanToken),
+    pdfUrl: buildCollectorPdfUrl(cleanInternalId, cleanToken),
+    customerEmail: String(reservation.customerEmail || "").trim(),
+    customerFirstName: String(reservation.customerFirstName || "").trim(),
+    customerLastName: String(reservation.customerLastName || "").trim(),
+  };
+}
+
+app.get("/collector/:internalId", async (req, res) => {
+  try {
+    const internalId = String(req.params.internalId || "").trim().toUpperCase();
+    const token = String(req.query.t || "").trim();
+    const record = await loadCollectorRecord(internalId, token);
+    const html = buildPageHtml(record, record.archiveId || internalId, { isOwner: true });
+
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    return res.status(200).send(html);
+  } catch (error) {
+    const status = error.statusCode || 500;
+    console.error("COLLECTOR PAGE ERROR:", error);
+    return res.status(status).send(status === 403 ? "Invalid collector access" : "Collector record not found");
+  }
+});
+
+app.get("/collector/:internalId/certificate.pdf", async (req, res) => {
+  try {
+    const internalId = String(req.params.internalId || "").trim().toUpperCase();
+    const token = String(req.query.t || "").trim();
+    const record = await loadCollectorRecord(internalId, token);
+    const pdfBase64 = await generatePdfBase64(buildPdfHtml(record, { isOwner: true }));
+    const buffer = Buffer.from(pdfBase64, "base64");
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="${record.archiveId || internalId}.pdf"`);
+    return res.status(200).send(buffer);
+  } catch (error) {
+    const status = error.statusCode || 500;
+    console.error("COLLECTOR PDF ERROR:", error);
+    return res.status(status).send(status === 403 ? "Invalid collector access" : "Collector PDF not found");
+  }
+});
+
 app.get("/:recordId", async (req, res) => {
   const publicId = String(req.params.recordId || "").trim().toUpperCase();
 

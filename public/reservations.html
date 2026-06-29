@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GLAMOPH — Edition Reservations</title>
+  <style>
+    :root { --bg:#f4f1ea; --panel:#fffaf1; --text:#151515; --muted:#756f67; --line:rgba(20,20,20,.14); --ok:#0f6a43; --ng:#9f2d2d; --mono:SFMono-Regular,Consolas,Menlo,monospace; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif; }
+    .wrap { width:min(calc(100% - 32px),1180px); margin:0 auto; padding:28px 0 60px; }
+    header { display:flex; justify-content:space-between; gap:16px; align-items:flex-end; margin-bottom:22px; }
+    h1 { margin:0; font-family:Georgia,"Times New Roman",serif; font-size:clamp(34px,5vw,58px); font-weight:400; line-height:.95; }
+    .kicker { margin:0 0 7px; color:var(--muted); font-size:11px; letter-spacing:.18em; text-transform:uppercase; }
+    .panel { background:rgba(255,255,255,.7); border:1px solid var(--line); border-radius:24px; padding:20px; margin-bottom:18px; }
+    .grid { display:grid; grid-template-columns:1.2fr 1fr 1fr auto; gap:10px; align-items:end; }
+    label { display:block; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-bottom:7px; }
+    input, select { width:100%; min-height:44px; border:1px solid var(--line); border-radius:14px; background:white; color:var(--text); padding:0 13px; font:inherit; }
+    button { min-height:44px; border:1px solid var(--line); border-radius:999px; background:white; color:var(--text); padding:0 16px; cursor:pointer; font:inherit; }
+    button.primary { background:#111; border-color:#111; color:white; }
+    button:disabled { opacity:.45; cursor:default; }
+    .status { min-height:22px; margin-top:12px; color:var(--muted); font-size:13px; line-height:1.5; }
+    .status.ok { color:var(--ok); } .status.ng { color:var(--ng); }
+    table { width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border:1px solid var(--line); border-radius:18px; background:rgba(255,255,255,.68); }
+    th, td { padding:12px 11px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; font-size:12px; line-height:1.45; }
+    th { color:var(--muted); font-size:10px; letter-spacing:.14em; text-transform:uppercase; background:rgba(255,255,255,.52); }
+    tr:last-child td { border-bottom:0; }
+    .mono { font-family:var(--mono); font-size:11px; word-break:break-all; }
+    .pill { display:inline-block; border:1px solid var(--line); border-radius:999px; padding:4px 8px; background:white; font-size:10px; letter-spacing:.08em; text-transform:uppercase; }
+    .pill.reserved { color:#7a5b00; } .pill.print_file_ready { color:#1f5878; } .pill.sent_to_dstudio { color:#65428a; } .pill.fulfilled,.pill.certificate_sent { color:var(--ok); } .pill.cancelled { color:var(--ng); }
+    .actions { display:flex; gap:6px; flex-wrap:wrap; }
+    @media (max-width:880px){ header,.grid{grid-template-columns:1fr;} table{display:block; overflow:auto;} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <p class="kicker">GLAMOPH Archive Admin</p>
+        <h1>Edition Reservations</h1>
+      </div>
+      <button onclick="loadReservations()">Refresh</button>
+    </header>
+
+    <section class="panel">
+      <div class="grid">
+        <div>
+          <label>Admin Token</label>
+          <input id="token" type="password" placeholder="ADMIN_REISSUE_TOKEN" />
+        </div>
+        <div>
+          <label>Order ID / Filter</label>
+          <input id="orderId" placeholder="Shopify numeric order ID" />
+        </div>
+        <button class="primary" onclick="reserveOrder()">Reserve Order</button>
+        <button onclick="loadReservations()">Load</button>
+      </div>
+      <div id="status" class="status"></div>
+    </section>
+
+    <section class="panel" style="padding:0; overflow:hidden;">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Record</th>
+            <th>Order</th>
+            <th>Artwork</th>
+            <th>dStudio Folder / Files</th>
+            <th>Dates</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          <tr><td colspan="7" style="color:var(--muted);">No data loaded.</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    function esc(v){ return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
+    function token(){ return $('token').value.trim(); }
+    function setStatus(msg, cls=''){ $('status').textContent = msg || ''; $('status').className = 'status' + (cls ? ' ' + cls : ''); }
+    async function api(url, options={}){
+      const headers = { ...(options.headers || {}), 'x-admin-token': token() };
+      if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+      const res = await fetch(url, { ...options, headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) throw new Error(data.error || `Request failed: ${res.status}`);
+      return data;
+    }
+    async function reserveOrder(){
+      if (!token()) return setStatus('Missing Admin Token', 'ng');
+      const orderId = $('orderId').value.trim();
+      if (!orderId) return setStatus('Missing Order ID', 'ng');
+      try {
+        setStatus('Reserving edition number(s)...');
+        const data = await api('/admin/reserve-order', { method:'POST', body: JSON.stringify({ orderId }) });
+        setStatus(`Reserved ${data.reserved?.length || 0} item(s).`, 'ok');
+        await loadReservations();
+      } catch(e){ setStatus(e.message, 'ng'); }
+    }
+    async function loadReservations(){
+      if (!token()) return setStatus('Missing Admin Token', 'ng');
+      try {
+        setStatus('Loading...');
+        const orderId = $('orderId').value.trim();
+        const url = '/admin/reservations' + (orderId ? `?orderId=${encodeURIComponent(orderId)}` : '');
+        const data = await api(url);
+        renderRows(data.reservations || []);
+        setStatus(`Loaded ${data.count || 0} reservation(s).`, 'ok');
+      } catch(e){ setStatus(e.message, 'ng'); }
+    }
+    async function updateStatus(lineItemId, status){
+      if (!token()) return setStatus('Missing Admin Token', 'ng');
+      try {
+        setStatus(`Updating ${lineItemId} → ${status}...`);
+        await api('/admin/update-reservation-status', { method:'POST', body: JSON.stringify({ lineItemId, status }) });
+        setStatus('Updated.', 'ok');
+        await loadReservations();
+      } catch(e){ setStatus(e.message, 'ng'); }
+    }
+    function renderRows(items){
+      if (!items.length) {
+        $('rows').innerHTML = '<tr><td colspan="7" style="color:var(--muted);">No reservations found.</td></tr>';
+        return;
+      }
+      $('rows').innerHTML = items.map(item => {
+        const ds = item.dStudio || {};
+        return `<tr>
+          <td><span class="pill ${esc(item.status)}">${esc(item.status || 'reserved')}</span></td>
+          <td><div class="mono">${esc(item.publicId)}</div><div>${esc(item.edition || '')}</div></td>
+          <td><div>${esc(item.orderName || '')}</div><div class="mono">${esc(item.orderId || '')}</div><div class="mono">Line: ${esc(item.lineItemId || '')}</div></td>
+          <td><div>${esc(item.title || '')}</div><div class="mono">${esc(item.sku || '')}</div><div>${esc(item.artworkCode || '')} / ${esc(item.sizeCode || '')}</div></td>
+          <td><div class="mono">${esc(ds.folderName || '')}</div><div class="mono">${esc(ds.printFileName || '')}</div><div class="mono">${esc(ds.certificateFileName || '')}</div></td>
+          <td><div>Reserved: ${esc(item.reservedAt || '')}</div><div>Updated: ${esc(item.updatedAt || '')}</div><div>Issued: ${esc(item.issuedAt || '')}</div></td>
+          <td><div class="actions">
+            <button onclick="updateStatus('${esc(item.lineItemId)}','print_file_ready')">Print Ready</button>
+            <button onclick="updateStatus('${esc(item.lineItemId)}','sent_to_dstudio')">Sent to dStudio</button>
+            <button onclick="updateStatus('${esc(item.lineItemId)}','cancelled')">Cancel</button>
+          </div></td>
+        </tr>`;
+      }).join('');
+    }
+  </script>
+</body>
+</html>
