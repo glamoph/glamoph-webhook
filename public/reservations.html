@@ -18,6 +18,7 @@
     input, select { width:100%; min-height:44px; border:1px solid var(--line); border-radius:14px; background:white; color:var(--text); padding:0 13px; font:inherit; }
     button { min-height:44px; border:1px solid var(--line); border-radius:999px; background:white; color:var(--text); padding:0 16px; cursor:pointer; font:inherit; }
     button.primary { background:#111; border-color:#111; color:white; }
+    button.danger { color:var(--ng); }
     button:disabled { opacity:.45; cursor:default; }
     .status { min-height:22px; margin-top:12px; color:var(--muted); font-size:13px; line-height:1.5; }
     .status.ok { color:var(--ok); } .status.ng { color:var(--ng); }
@@ -27,8 +28,11 @@
     tr:last-child td { border-bottom:0; }
     .mono { font-family:var(--mono); font-size:11px; word-break:break-all; }
     .pill { display:inline-block; border:1px solid var(--line); border-radius:999px; padding:4px 8px; background:white; font-size:10px; letter-spacing:.08em; text-transform:uppercase; }
-    .pill.reserved { color:#7a5b00; } .pill.print_file_ready { color:#1f5878; } .pill.sent_to_dstudio { color:#65428a; } .pill.fulfilled,.pill.certificate_sent { color:var(--ok); } .pill.cancelled { color:var(--ng); }
+    .pill.reserved { color:#7a5b00; }
+    .pill.fulfilled,.pill.certificate_sent { color:var(--ok); }
+    .pill.cancelled { color:var(--ng); }
     .actions { display:flex; gap:6px; flex-wrap:wrap; }
+    .next-step { margin-top:6px; color:var(--muted); font-size:11px; line-height:1.5; }
     @media (max-width:880px){ header,.grid{grid-template-columns:1fr;} table{display:block; overflow:auto;} }
   </style>
 </head>
@@ -66,9 +70,9 @@
             <th>Record</th>
             <th>Order</th>
             <th>Artwork</th>
-            <th>dStudio Folder / Files</th>
+            <th>dStudio Folder / Print File</th>
             <th>Dates</th>
-            <th>Actions</th>
+            <th>Cancel</th>
           </tr>
         </thead>
         <tbody id="rows">
@@ -83,6 +87,7 @@
     function esc(v){ return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
     function token(){ return $('token').value.trim(); }
     function setStatus(msg, cls=''){ $('status').textContent = msg || ''; $('status').className = 'status' + (cls ? ' ' + cls : ''); }
+
     async function api(url, options={}){
       const headers = { ...(options.headers || {}), 'x-admin-token': token() };
       if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
@@ -91,19 +96,28 @@
       if (!res.ok || data.ok === false) throw new Error(data.error || `Request failed: ${res.status}`);
       return data;
     }
+
     async function reserveOrder(){
       if (!token()) return setStatus('Missing Admin Token', 'ng');
       const orderId = $('orderId').value.trim();
       if (!orderId) return setStatus('Missing Order ID', 'ng');
+
       try {
         setStatus('Reserving edition number(s)...');
-        const data = await api('/admin/reserve-order', { method:'POST', body: JSON.stringify({ orderId }) });
+        const data = await api('/admin/reserve-order', {
+          method:'POST',
+          body: JSON.stringify({ orderId })
+        });
         setStatus(`Reserved ${data.reserved?.length || 0} item(s).`, 'ok');
         await loadReservations();
-      } catch(e){ setStatus(e.message, 'ng'); }
+      } catch(e){
+        setStatus(e.message, 'ng');
+      }
     }
+
     async function loadReservations(){
       if (!token()) return setStatus('Missing Admin Token', 'ng');
+
       try {
         setStatus('Loading...');
         const orderId = $('orderId').value.trim();
@@ -111,36 +125,74 @@
         const data = await api(url);
         renderRows(data.reservations || []);
         setStatus(`Loaded ${data.count || 0} reservation(s).`, 'ok');
-      } catch(e){ setStatus(e.message, 'ng'); }
+      } catch(e){
+        setStatus(e.message, 'ng');
+      }
     }
-    async function updateStatus(lineItemId, status){
+
+    async function cancelReservation(lineItemId){
       if (!token()) return setStatus('Missing Admin Token', 'ng');
+
+      const ok = window.confirm('Cancel this reservation? This should only be used for cancelled/test orders.');
+      if (!ok) return;
+
       try {
-        setStatus(`Updating ${lineItemId} → ${status}...`);
-        await api('/admin/update-reservation-status', { method:'POST', body: JSON.stringify({ lineItemId, status }) });
-        setStatus('Updated.', 'ok');
+        setStatus(`Cancelling reservation ${lineItemId}...`);
+        await api('/admin/update-reservation-status', {
+          method:'POST',
+          body: JSON.stringify({ lineItemId, status:'cancelled' })
+        });
+        setStatus('Reservation cancelled.', 'ok');
         await loadReservations();
-      } catch(e){ setStatus(e.message, 'ng'); }
+      } catch(e){
+        setStatus(e.message, 'ng');
+      }
     }
+
     function renderRows(items){
       if (!items.length) {
         $('rows').innerHTML = '<tr><td colspan="7" style="color:var(--muted);">No reservations found.</td></tr>';
         return;
       }
+
       $('rows').innerHTML = items.map(item => {
         const ds = item.dStudio || {};
+        const status = item.status || 'reserved';
+        const canCancel = !['fulfilled', 'certificate_sent', 'cancelled'].includes(status);
+
         return `<tr>
-          <td><span class="pill ${esc(item.status)}">${esc(item.status || 'reserved')}</span></td>
-          <td><div class="mono">${esc(item.publicId)}</div><div>${esc(item.edition || '')}</div></td>
-          <td><div>${esc(item.orderName || '')}</div><div class="mono">${esc(item.orderId || '')}</div><div class="mono">Line: ${esc(item.lineItemId || '')}</div></td>
-          <td><div>${esc(item.title || '')}</div><div class="mono">${esc(item.sku || '')}</div><div>${esc(item.artworkCode || '')} / ${esc(item.sizeCode || '')}</div></td>
-          <td><div class="mono">${esc(ds.folderName || '')}</div><div class="mono">${esc(ds.printFileName || '')}</div><div class="mono">${esc(ds.certificateFileName || '')}</div></td>
-          <td><div>Reserved: ${esc(item.reservedAt || '')}</div><div>Updated: ${esc(item.updatedAt || '')}</div><div>Issued: ${esc(item.issuedAt || '')}</div></td>
-          <td><div class="actions">
-            <button onclick="updateStatus('${esc(item.lineItemId)}','print_file_ready')">Print Ready</button>
-            <button onclick="updateStatus('${esc(item.lineItemId)}','sent_to_dstudio')">Sent to dStudio</button>
-            <button onclick="updateStatus('${esc(item.lineItemId)}','cancelled')">Cancel</button>
-          </div></td>
+          <td>
+            <span class="pill ${esc(status)}">${esc(status)}</span>
+            <div class="next-step">Create final artwork file, upload it to the shared folder, then email dStudio to proceed.</div>
+          </td>
+          <td>
+            <div class="mono">${esc(item.publicId)}</div>
+            <div>${esc(item.edition || '')}</div>
+          </td>
+          <td>
+            <div>${esc(item.orderName || '')}</div>
+            <div class="mono">${esc(item.orderId || '')}</div>
+            <div class="mono">Line: ${esc(item.lineItemId || '')}</div>
+          </td>
+          <td>
+            <div>${esc(item.title || '')}</div>
+            <div class="mono">${esc(item.sku || '')}</div>
+            <div>${esc(item.artworkCode || '')} / ${esc(item.sizeCode || '')}</div>
+          </td>
+          <td>
+            <div class="mono">${esc(ds.folderName || '')}</div>
+            <div class="mono">${esc(ds.printFileName || '')}</div>
+          </td>
+          <td>
+            <div>Reserved: ${esc(item.reservedAt || '')}</div>
+            <div>Updated: ${esc(item.updatedAt || '')}</div>
+            <div>Issued: ${esc(item.issuedAt || '')}</div>
+          </td>
+          <td>
+            <div class="actions">
+              ${canCancel ? `<button class="danger" onclick="cancelReservation('${esc(item.lineItemId)}')">Cancel</button>` : ''}
+            </div>
+          </td>
         </tr>`;
       }).join('');
     }
