@@ -2080,14 +2080,17 @@ app.post("/admin/update-reservation-status", express.json({ limit: "1mb" }), asy
     const lineItemId = String(req.body?.lineItemId || "").trim();
     const status = String(req.body?.status || "").trim();
 
-    const allowed = new Set(["reserved", "print_file_ready", "sent_to_dstudio", "cancelled"]);
+    // Keep the reservation admin actions intentionally minimal.
+    // dStudio production is not triggered from this system; artwork files are
+    // uploaded to the shared Google Drive / Dropbox folder and dStudio is
+    // notified by email separately. Therefore, this endpoint should not expose
+    // internal progress statuses such as print_file_ready or sent_to_dstudio.
+    const allowed = new Set(["reserved", "cancelled"]);
     if (!lineItemId || !allowed.has(status)) {
       return res.status(400).json({ ok: false, error: "Missing lineItemId or invalid status" });
     }
 
-    const field = status === "print_file_ready" ? "printFileReadyAt" :
-      status === "sent_to_dstudio" ? "sentToDStudioAt" :
-      status === "cancelled" ? "cancelledAt" : "statusUpdatedAt";
+    const field = status === "cancelled" ? "cancelledAt" : "statusUpdatedAt";
 
     const reservation = await updateReservation(lineItemId, {
       status,
